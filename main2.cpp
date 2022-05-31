@@ -95,6 +95,17 @@ void swap(int& x1, int& y1, int& x2, int& y2)
     y1 = y2;
     y2 = tmp;
 }
+
+void swapPoints(POINT& p1, POINT& p2)
+{
+    int tmp = p1.x;
+    p1.x = p2.x;
+    p2.x = tmp;
+    tmp = p1.y;
+    p1.y = p2.y;
+    p2.y = tmp;
+}
+
 void Draw8Points(HDC hdc, int xc, int yc, int a, int b, COLORREF c)
 {
 
@@ -313,23 +324,23 @@ void Draw2Points(HDC hdc, int xc, int yc, int a, int b, COLORREF color, int quar
 {
     if (quarter == 4)
     {
-        SetPixel(hdc, xc + b, yc + a, RGB(0, 0, 0)); // 4
-        SetPixel(hdc, xc + a, yc + b, RGB(0, 0, 0));
+        SetPixel(hdc, xc + b, yc + a, color); // 4
+        SetPixel(hdc, xc + a, yc + b, color);
     }
     else if (quarter == 3)
     {
-        SetPixel(hdc, xc - a, yc + b, RGB(0, 0, 0)); // 3
-        SetPixel(hdc, xc - b, yc + a, RGB(0, 0, 0));
+        SetPixel(hdc, xc - a, yc + b, color); // 3
+        SetPixel(hdc, xc - b, yc + a, color);
     } // 3
     else if (quarter == 2)
     {
-        SetPixel(hdc, xc - a, yc - b, RGB(0, 0, 0)); // 2
-        SetPixel(hdc, xc - b, yc - a, RGB(0, 0, 0));
+        SetPixel(hdc, xc - a, yc - b, color); // 2
+        SetPixel(hdc, xc - b, yc - a, color);
     } // 2
     else if (quarter == 1)
     {
-        SetPixel(hdc, xc + a, yc - b, RGB(0, 0, 0)); // 1
-        SetPixel(hdc, xc + b, yc - a, RGB(0, 0, 0));
+        SetPixel(hdc, xc + a, yc - b, color); // 1
+        SetPixel(hdc, xc + b, yc - a, color);
     } // 1
 }
 void DrawCircleAndFillItWithCircles(HDC hdc, int xc, int yc, int R, COLORREF color, int quarter)
@@ -887,13 +898,13 @@ void Initialize(edgeTable table)
     }
 }
 
-void UpdateEdgeToTable(Point p1, Point p2, edgeTable table)
+void UpdateEdgeToTable(POINT p1, POINT p2, edgeTable table)
 {
 
     if (p1.y == p2.y)
         return;
     if (p1.y > p2.y)
-        swap(p1.x, p1.y, p2.x, p2.y);
+        swapPoints(p1, p2);
     int slopeInverse = (p2.x - p1.x) / (double)(p2.y - p1.y);
     double x = p1.x;
     int y = p1.y;
@@ -908,12 +919,12 @@ void UpdateEdgeToTable(Point p1, Point p2, edgeTable table)
     }
 }
 
-void PolygonToTable(Point PolygonPoints[], int n, edgeTable table)
+void PolygonToTable(POINT PolygonPoints[], int n, edgeTable table)
 {
-    Point p1 = PolygonPoints[n - 1];
+    POINT p1 = PolygonPoints[n - 1];
     for (int i = 0; i < n; i++)
     {
-        Point p2 = PolygonPoints[i];
+        POINT p2 = PolygonPoints[i];
         UpdateEdgeToTable(p1, p2, table);
         p1 = p2;
     }
@@ -931,7 +942,7 @@ void TableToScreen(HDC hdc, edgeTable table, COLORREF color)
     }
 }
 
-void FillConvexPolygon(HDC hdc, Point PolygonPoints[], int n, COLORREF color)
+void FillConvexPolygon(HDC hdc, POINT PolygonPoints[], int n, COLORREF color)
 {
     edgeTable table;
     Initialize(table);
@@ -1098,9 +1109,10 @@ void AddMenus(HWND hwnd)
 
 
 COLORREF color = RGB(0, 0, 0);
-int case_number, quarter;
+int case_number, quarter = 1;
 int R, A, B, x, x2, x3, y, y2, y3, counter = 0;
-
+int Num_of_Points = 0;
+POINT P[5];
 LRESULT CALLBACK WindowProcedure(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
     HDC hdc = GetDC(hwnd);
@@ -1390,6 +1402,94 @@ LRESULT CALLBACK WindowProcedure(HWND hwnd, UINT message, WPARAM wParam, LPARAM 
             y2 = (y2 - y) * (y2 - y);
             R = sqrt(x2 + y2);
             CircleFasterBresenham(hdc, x, y, R, color);
+        }
+        if (case_number == 21 || case_number == 22)// circle with quarter
+        {
+            x2 = LOWORD(lParam);
+            y2 = HIWORD(lParam);
+            x2 = (x2 - x) * (x2 - x);
+            y2 = (y2 - y) * (y2 - y);
+            R = sqrt(x2 + y2);
+            if (case_number == 21)
+                DrawCircleAndFillItWithLines(hdc, x, y, R, color, quarter);
+            else
+                DrawCircleAndFillItWithCircles(hdc, x, y, R, color, quarter);
+        }
+        if (case_number == 23)
+        {
+            x2 = LOWORD(lParam) - x;
+            y2 = HIWORD(lParam) - y;
+            R = sqrt(x2 * x2 + y2 * y2);
+            DrawSquare(hdc, x, y, R, color);
+        }
+        if (case_number == 24)
+        {
+            x2 = LOWORD(lParam) - x;
+            y2 = HIWORD(lParam) - y;
+            R = sqrt(x2 * x2 + y2 * y2);
+            DrawRec(hdc, x, y, R, 100, color);
+        }
+        if (case_number == 25)
+        {
+            x2 = LOWORD(lParam);
+            y2 = HIWORD(lParam);
+            RecursiveFloodFill(hdc, x2, y2, color, RGB(255, 0, 0));
+        }
+        if (case_number == 26)
+        {
+            x2 = LOWORD(lParam);
+            y2 = HIWORD(lParam);
+            NonRecursiveFloodFill(hdc, x2, y2, color, RGB(255, 0, 0));
+        }
+        else if (case_number == 27 || case_number == 28)
+        {
+            if (Num_of_Points == 0)
+            {
+                P[0].x = LOWORD(lParam);
+                P[0].y = HIWORD(lParam);
+                Num_of_Points++;
+            }
+            else if (Num_of_Points == 1)
+            {
+                P[1].x = LOWORD(lParam);
+                P[1].y = HIWORD(lParam);
+                Num_of_Points++;
+            }
+            else if (Num_of_Points == 2)
+            {
+                P[2].x = LOWORD(lParam);
+                P[2].y = HIWORD(lParam);
+                Num_of_Points++;
+            }
+            else if (Num_of_Points == 3)
+            {
+                P[3].x = LOWORD(lParam);
+                P[3].y = HIWORD(lParam);
+                Num_of_Points++;
+                /*
+                SelectObject(hdc, GetStockObject(DC_PEN));
+                SetDCPenColor(hdc, color);
+                Polygon(hdc, P, 4);
+                FillConvexPolygon(hdc, P, 4, color);*/
+            }
+            else if (Num_of_Points == 4)
+            {
+                P[4].x = LOWORD(lParam);
+                P[4].y = HIWORD(lParam);
+                Num_of_Points++;
+                //change pen color//
+                SelectObject(hdc, GetStockObject(DC_PEN));
+                SetDCPenColor(hdc, color);
+                Polygon(hdc, P, 5);
+            }
+            else if (Num_of_Points == 5)
+            {
+                //fill polygon
+                if (case_number == 27)
+                    fillPolygon(hdc, P, 5, color);
+                else
+                    FillConvexPolygon(hdc, P, 5, color);
+            }
         }
         break;
 
