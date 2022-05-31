@@ -1051,7 +1051,7 @@ void AddMenus(HWND hwnd)
 
 COLORREF color = RGB(0, 0, 0);
 int case_number;
-int x1, x2, x3, y1, y2, y3;
+int A, B, x, x2, x3, y, y2, y3, counter = 0;
 LRESULT CALLBACK WindowProcedure(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
     HDC hdc = GetDC(hwnd);
@@ -1250,13 +1250,33 @@ LRESULT CALLBACK WindowProcedure(HWND hwnd, UINT message, WPARAM wParam, LPARAM 
     case WM_LBUTTONDOWN:
         if (case_number >= 6 && case_number <= 16 || (case_number >= 21 && case_number <= 26)) //  (Direct, Polar, iterative Polar, midpoint and modified Midpoint)
         {
-            x1 = LOWORD(lParam);
-            y1 = HIWORD(lParam);
+            x = LOWORD(lParam);
+            y = HIWORD(lParam);
         }
         break;
 
     case WM_RBUTTONDOWN:
-
+        if (case_number >= 14 && case_number <= 16) //ellipse
+        {
+            if (counter == 0) {
+                x2 = LOWORD(lParam);
+                y2 = HIWORD(lParam);
+                A = Round(std::sqrt(std::pow(x2 - x, 2.0) + pow(y2 - y, 2.0)));
+                counter++;
+            }
+            else if (counter == 1) {
+                x3 = LOWORD(lParam);
+                y3 = HIWORD(lParam);
+                B = Round(std::sqrt(std::pow(x3 - x, 2.0) + pow(y3 - y, 2.0)));
+                if (case_number == 14)
+                    DrawEllipseCartesian(hdc, x, y, A, B, color);
+                else if (case_number == 15)
+                    DrawEllipsePolar(hdc, x, y, A, B, color);
+                //else
+                    //TODO: midpoint 
+                counter = 0;
+            }
+        }
         break;
 
     case WM_DESTROY:
