@@ -13,6 +13,7 @@
 #include<stack>
 #include<cmath>
 #include<algorithm>
+#include <fstream>
 using namespace std;
 
 /*  Declare Windows procedure  */
@@ -45,7 +46,7 @@ int WINAPI WinMain(HINSTANCE hThisInstance,
     wincl.cbClsExtra = 0;                      /* No extra bytes after the window class */
     wincl.cbWndExtra = 0;                      /* structure or the window instance */
     /* Use Windows's default colour as the background of the window */
-    wincl.hbrBackground = (HBRUSH)RGB(255,255,0);
+    wincl.hbrBackground = (HBRUSH)RGB(255, 255, 0);
 
     /* Register the window class, and if it fails quit the program */
     if (!RegisterClassEx(&wincl))
@@ -65,7 +66,7 @@ int WINAPI WinMain(HINSTANCE hThisInstance,
         NULL,                /* No menu */
         hThisInstance,       /* Program Instance handler */
         NULL                 /* No Window Creation data */
-        );
+    );
 
     /* Make the window visible on the screen */
     ShowWindow(hwnd, nCmdShow);
@@ -1025,6 +1026,68 @@ void SwapPoints(POINT& v1, POINT& v2)
 }
 
 
+/*--------------------save and load----------------------*/
+bool HDCToFile(const char* FilePath, HDC Context, RECT Area, uint16_t BitsPerPixel)
+{
+    uint32_t Width = Area.right - Area.left;
+    uint32_t Height = Area.bottom - Area.top;
+
+    BITMAPINFO Info;
+    BITMAPFILEHEADER Header;
+    memset(&Info, 0, sizeof(Info));
+    memset(&Header, 0, sizeof(Header));
+    Info.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
+    Info.bmiHeader.biWidth = Width;
+    Info.bmiHeader.biHeight = Height;
+    Info.bmiHeader.biPlanes = 1;
+    Info.bmiHeader.biBitCount = BitsPerPixel;
+    Info.bmiHeader.biCompression = BI_RGB;
+    Info.bmiHeader.biSizeImage = Width * Height * (BitsPerPixel > 24 ? 4 : 3);
+    Header.bfType = 0x4D42;
+    Header.bfOffBits = sizeof(BITMAPFILEHEADER) + sizeof(BITMAPINFOHEADER);
+
+
+    char* Pixels = NULL;
+    HDC MemDC = CreateCompatibleDC(Context);
+    HBITMAP Section = CreateDIBSection(Context, &Info, DIB_RGB_COLORS, (void**)&Pixels, 0, 0);
+    DeleteObject(SelectObject(MemDC, Section));
+    BitBlt(MemDC, 0, 0, Width, Height, Context, Area.left, Area.top, SRCCOPY);
+    DeleteDC(MemDC);
+
+    std::fstream hFile(FilePath, std::ios::out | std::ios::binary);
+    if (hFile.is_open())
+    {
+        hFile.write((char*)&Header, sizeof(Header));
+        hFile.write((char*)&Info.bmiHeader, sizeof(Info.bmiHeader));
+        hFile.write(Pixels, (((BitsPerPixel * Width + 31) & ~31) / 8) * Height);
+        hFile.close();
+        DeleteObject(Section);
+        return true;
+    }
+
+    DeleteObject(Section);
+    return false;
+}
+
+void load(HWND hWnd, HDC& hdc)
+{
+    string fileName = "picture.bmp";
+    if (fileName == "")
+        return;
+    HBITMAP hBitmap;
+    hBitmap = (HBITMAP)::LoadImage(NULL, L"picture.bmp", IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE);
+    HDC hLocalDC;
+    hLocalDC = CreateCompatibleDC(hdc);
+    BITMAP qBitmap;
+    int iReturn = GetObject(reinterpret_cast<HGDIOBJ>(hBitmap), sizeof(BITMAP), reinterpret_cast<LPVOID>(&qBitmap));
+    HBITMAP hOldBmp = (HBITMAP)SelectObject(hLocalDC, hBitmap);
+    BOOL qRetBlit = BitBlt(hdc, 0, 0, qBitmap.bmWidth, qBitmap.bmHeight, hLocalDC, 0, 0, SRCCOPY);
+    SelectObject(hLocalDC, hOldBmp);
+    DeleteDC(hLocalDC);
+    DeleteObject(hBitmap);
+}
+
+
 HMENU list_;
 
 
@@ -1094,9 +1157,9 @@ void AddMenus(HWND hwnd)
 
 
 
-    AppendMenu(Clear_list, MF_STRING, 34, L"Clear");
-    AppendMenu(Clear_list, MF_STRING, 35, L"Save");
-    AppendMenu(Clear_list, MF_STRING, 36, L"Load");
+    AppendMenu(Clear_list, MF_STRING, 37, L"Clear");
+    AppendMenu(Clear_list, MF_STRING, 38, L"Save");
+    AppendMenu(Clear_list, MF_STRING, 39, L"Load");
 
     AppendMenu(list_, MF_POPUP, (UINT_PTR)Clear_list, L"Clear");
 
@@ -1305,6 +1368,26 @@ LRESULT CALLBACK WindowProcedure(HWND hwnd, UINT message, WPARAM wParam, LPARAM 
         case  (36):
             case_number = 36;
             cout << "You can Draw circle using MidPoint Modification Algorithm....." << endl;
+
+            break;
+
+        case  (37):
+            InvalidateRect(hwnd, NULL, TRUE);
+            cout << "Window is clear now ...." << endl;
+
+            break;
+        case  (38):
+            RECT rect;
+            if (GetWindowRect(hwnd, &rect)) {
+
+                rect.top += 10;
+                rect.left += 10;
+                HDCToFile("picture.bmp", hdc, rect, 24);
+                ReleaseDC(hwnd, hdc);
+            }
+            break;
+        case  (39):
+            load(hwnd, hdc);
 
             break;
         }
