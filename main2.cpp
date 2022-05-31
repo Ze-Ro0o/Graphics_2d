@@ -13,7 +13,7 @@
 #include<stack>
 #include<cmath>
 #include<algorithm>
-#include <fstream>
+#include<fstream>
 using namespace std;
 
 /*  Declare Windows procedure  */
@@ -66,7 +66,7 @@ int WINAPI WinMain(HINSTANCE hThisInstance,
         NULL,                /* No menu */
         hThisInstance,       /* Program Instance handler */
         NULL                 /* No Window Creation data */
-    );
+        );
 
     /* Make the window visible on the screen */
     ShowWindow(hwnd, nCmdShow);
@@ -187,54 +187,160 @@ void SimpleDDA(HDC hdc, int xs, int ys, int xe, int ye, COLORREF color)
         }
     }
 }
-void MidpointLine(HDC hdc, int xs, int ys, int xe, int ye, COLORREF color)
-{
-    int dx = xe - xs;
-    int dy = ye - ys;
-    if (abs(dx) >= abs(dy))
+void DrawLineBresenham(HDC hdc, int x1, int y1, int x2, int y2, COLORREF c) {
+    int x = x1, y = y1;
+    double dx = x2 - x1, dy = y2 - y1;
+    SetPixel(hdc, x, y, c);
+    if ((dx == 0 || dy / dx > 1) && dy > 0 && dx >= 0)
     {
-        if (xs > xe)swap(xs, ys, xe, ye);
-        int x = xs;
-        int y = ys;
-        int d = dx - 2 * dy;
-        int d1 = 2 * dx - 2 * dy;
-        int d2 = -2 * dy;
-        while (x < xe)
+        int d = 2 * dx - dy, d1 = 2 * dx, d2 = 2 * dx - 2 * dy;
+        while (y != y2)
         {
             if (d <= 0)
             {
                 y++;
+                d += d1;
+            }
+            else
+            {
+                x++;
+                y++;
+                d += d2;
+            }
+            SetPixel(hdc, x, y, c);
+        }
+    }
+    else if (dy / dx >= 0 && dy / dx <= 1 && dy >= 0 && dx > 0)
+    {
+        int d = dx - 2 * dy, d1 = -2 * dy, d2 = 2 * dx - 2 * dy;
+        while (x != x2)
+        {
+            if (d > 0)
+            {
                 x++;
                 d += d1;
             }
             else
             {
                 x++;
+                y++;
                 d += d2;
             }
-            SetPixel(hdc, x, y, color);
+            SetPixel(hdc, x, y, c);
         }
     }
-    else
+    else if (dy / dx < 0 && dy / dx >= -1 && dy <= 0 && dx>0)
     {
-        if (ys > ye)swap(xs, ys, xe, ye);
-        int x = xs;
-        int y = ys;
-        int d = 2 * dx - dy;
-        int d1 = 2 * dx - 2 * dy;
-        int d2 = 2 * dx;
-        while (y < ye) {
-
-            if (d <= 0) {
+        int d = -dx - 2 * dy, d1 = -2 * dy, d2 = -2 * dx - 2 * dy;
+        while (x != x2)
+        {
+            if (d <= 0)
+            {
                 x++;
+                d += d1;
+            }
+            else
+            {
+                x++;
+                y--;
+                d += d2;
+            }
+            SetPixel(hdc, x, y, c);
+        }
+    }
+    else if ((dx == 0 || dy / dx < -1) && dy < 0 && dx >= 0)
+    {
+        int d = -2 * dx - dy, d1 = -2 * dx, d2 = -2 * dx - 2 * dy;
+        while (y != y2)
+        {
+            if (d > 0)
+            {
+                y--;
+                d += d1;
+            }
+            else
+            {
+                x++;
+                y--;
+                d += d2;
+            }
+            SetPixel(hdc, x, y, c);
+        }
+    }
+    else if ((dx == 0 || dy / dx > 1) && dy < 0 && dx <= 0)
+    {
+        int d = -2 * dx + dy, d1 = -2 * dx, d2 = -2 * dx + 2 * dy;
+        while (y != y2)
+        {
+            if (d <= 0)
+            {
+                y--;
+                d += d1;
+            }
+            else
+            {
+                x--;
+                y--;
+                d += d2;
+            }
+            SetPixel(hdc, x, y, c);
+        }
+    }
+    else if (dy / dx >= 0 && dy / dx <= 1 && dy <= 0 && dx < 0)
+    {
+        int d = -dx + 2 * dy, d1 = 2 * dy, d2 = -2 * dx + 2 * dy;
+        while (x != x2)
+        {
+            if (d > 0)
+            {
+                x--;
+                d += d1;
+            }
+            else
+            {
+                x--;
+                y--;
+                d += d2;
+            }
+            SetPixel(hdc, x, y, c);
+        }
+    }
+    else if (dy / dx < 0 && dy / dx >= -1 && dy >= 0 && dx < 0)
+    {
+        int d = dx + 2 * dy, d1 = 2 * dy, d2 = 2 * dx + 2 * dy;
+        while (x != x2)
+        {
+            if (d <= 0)
+            {
+                x--;
+                d += d1;
+            }
+            else
+            {
+                x--;
+                y++;
+                d += d2;
+            }
+            SetPixel(hdc, x, y, c);
+        }
+    }
+    else if ((dx == 0 || dy / dx < -1) && dy > 0 && dx <= 0)
+    {
+        int d = 2 * dx + dy, d1 = 2 * dx, d2 = 2 * dx + 2 * dy;
+        while (y != y2)
+        {
+            if (d > 0)
+            {
                 y++;
                 d += d1;
             }
-            else {
+            else
+            {
+                x--;
                 y++;
                 d += d2;
             }
-            SetPixel(hdc, x, y, color);
+            SetPixel(hdc, x, y, c);
         }
     }
 }
@@ -526,7 +632,7 @@ void DrawEllipseCartesian(HDC hdc, int xc, int yc, int A, int B, COLORREF color)
         Draw4Points(hdc, xc, yc, Round(x2), y2, color);
     }
 }
-void DrawMidpointEllipse(HDC hdc, int xc, int yc, int A, int B, COLORREF color)
+void DrawEllipseBresenham(HDC hdc, int xc, int yc, int A, int B, COLORREF color)
 {
 
 
@@ -629,6 +735,17 @@ struct Vector2
     }
 };
 
+struct Vector8 {
+    double v[2];
+    Vector8(double x = 0, double y = 0)
+    {
+        v[0] = x; v[1] = y;
+    }
+    double& operator[](int i) {
+        return v[i];
+    }
+};
+
 class Matrix4
 {
     Vector4 M[4];
@@ -660,7 +777,7 @@ Vector4 GetHermiteCoeff(double x0, double s0, double x1, double s1)
     return basis * v;
 }
 
-void DrawHermiteCurve(HDC hdc, Vector2& P0, Vector2& T0, Vector2& P1, Vector2& T1, int
+void DrawHermiteCurve1(HDC hdc, Vector2& P0, Vector2& T0, Vector2& P1, Vector2& T1, int
     numpoints)
 {
     Vector4 xcoeff = GetHermiteCoeff(P0.x, T0.x, P1.x, T1.x);
@@ -678,18 +795,58 @@ void DrawHermiteCurve(HDC hdc, Vector2& P0, Vector2& T0, Vector2& P1, Vector2& T
     }
 }
 
-void DrawCardinalSpline(HDC hdc, Vector2 P[], int n, double c, int numpix)
+void DrawHermiteCurve2(HDC hdc, int x1, int y1, int x2, int y2, COLORREF c, int cx, int cy, int RR2)
 {
-    double c1 = 1 - c;
-    Vector2 T0(c1 * (P[2].x - P[0].x), c1 * (P[2].y - P[0].y));
-    for (int i = 2; i < n - 1; i++)
+    int a, b;
+    double a0 = x1, a1 = 5,
+        a2 = -3 * x1 - 2 * 5 + 3 * x2 - 5,
+        a3 = 2 * x1 + 5 - 2 * x2 + 5;
+    double b0 = y1, b1 = 5,
+        b2 = -3 * y1 - 2 * 5 + 3 * y2 - 5,
+        b3 = 2 * y1 + 5 - 2 * y2 + 5;
+    for (double t = 0; t <= 1; t += 0.001)
     {
-        Vector2 T1(c1 * (P[i + 1].x - P[i - 1].x), c1 * (P[i + 1].y - P[i - 1].y));
-        DrawHermiteCurve(hdc, P[i - 1], T0, P[i], T1, numpix);
-        T0 = T1;
+        double t2 = t * t, t3 = t2 * t;
+        double x = a0 + a1 * t + a2 * t2 + a3 * t3;
+        double y = b0 + b1 * t + b2 * t2 + b3 * t3;
+        a = cx - x;
+        b = cy - y;
+        if (x >= cx && x <= (cx + RR2) && y >= cy && y <= (cy + RR2)) {
+            SetPixel(hdc, Round(x), Round(y), c);
+        }
+
+
     }
 }
-void drawBezierCurve(HDC hdc, int x1, int y1, int x2, int y2, int u1, int u2, int u3, int u4, COLORREF c, int cx, int cy, int RR2)
+void DrawHermiteCurve4(HDC hdc, Vector8& p1, Vector8& T1, Vector8& p2, Vector8& T2, COLORREF c)
+{
+    double a0 = p1[0], a1 = T1[0],
+        a2 = -3 * p1[0] - 2 * T1[0] + 3 * p2[0] - T2[0],
+        a3 = 2 * p1[0] + T1[0] - 2 * p2[0] + T2[0];
+    double b0 = p1[1], b1 = T1[1],
+        b2 = -3 * p1[1] - 2 * T1[1] + 3 * p2[1] - T2[1],
+        b3 = 2 * p1[1] + T1[1] - 2 * p2[1] + T2[1];
+    for (double t = 0; t <= 1; t += 0.001)
+    {
+        double t2 = t * t, t3 = t2 * t;
+        double x = a0 + a1 * t + a2 * t2 + a3 * t3;
+        double y = b0 + b1 * t + b2 * t2 + b3 * t3;
+        SetPixel(hdc, Round(x), Round(y), c);
+    }
+}
+void DrawCardinalSpline(HDC hdc, Vector8 P[], int n, double c, COLORREF C)
+{
+    double c1 = 1 - c;
+    Vector8 T0 = c1 * ((P[2][0] - P[0][0]), (P[2][1] - P[0][1]));
+    for (int i = 0; i < n - 1; i++)
+    {
+        Vector8 T1 = c1 * ((P[i + 1][0] - P[i - 1][0]), (P[i + 1][1] - P[i - 1][1]));
+        DrawHermiteCurve4(hdc, P[i], T0, P[i + 1], T1, C);
+        T0 = T1;
+    }
+
+}
+void drawBezierCurve(HDC hdc, int x1, int y1, int x2, int y2, int u1, int u2, int u3, int u4, COLORREF c, int cx, int cy, int RR2, int RR3)
 {
     int a, b;
     // int u1=50;int u2=60;int u3=30;int u4=60;
@@ -706,19 +863,19 @@ void drawBezierCurve(HDC hdc, int x1, int y1, int x2, int y2, int u1, int u2, in
         double y = b0 + b1 * t + b2 * t2 + b3 * t3;
         a = cx - x;
         b = cy - y;
-        if (x >= cx && x <= (cx + RR2) && y >= cy && y <= (cy + RR2)) {
+        if (x >= cx && x <= (cx + RR2) && y >= cy && y <= (cy + RR3)) {
             SetPixel(hdc, Round(x), Round(y), c);
         }
 
 
     }
 }
-void drawbetzer(HDC hdc, int xs, int ys, int xe, int ye, COLORREF color, int cx, int cy, int RR) {
+void drawbetzer(HDC hdc, int xs, int ys, int xe, int ye, COLORREF color, int cx, int cy, int RR, int RR1) {
     int dx = xe - xs;
     int dy = ye - ys;
     int xa = xs + RR;
-    int t1 = 50, t2 = 60, t3 = 30, t4 = 60;
-    drawBezierCurve(hdc, xs, ys, xa, ys, t1, t2, t3, t4, color, cx, cy, RR);
+    int t1 = 5, t2 = 6, t3 = 3, t4 = 1;
+    drawBezierCurve(hdc, xs, ys, xa, ys, t1, t2, t3, t4, color, cx, cy, RR, RR1);
     if (abs(dx) >= abs(dy))
     {
         int x = xs, xinc = dx > 0 ? 1 : -1;
@@ -728,9 +885,9 @@ void drawbetzer(HDC hdc, int xs, int ys, int xe, int ye, COLORREF color, int cx,
             x += xinc;
             y += yinc;
 
-            xa = x + RR;
+            xa = round(x) + RR;
 
-            drawBezierCurve(hdc, xs, round(y), xa, round(y), t1, t2, t3, t4, color, cx, cy, RR);
+            drawBezierCurve(hdc, xs, round(y), xa, round(y), t1, t2, t3, t4, color, cx, cy, RR, RR1);
         }
     }
     else
@@ -741,10 +898,10 @@ void drawbetzer(HDC hdc, int xs, int ys, int xe, int ye, COLORREF color, int cx,
         {
             x += xinc;
             y += yinc;
-            SetPixel(hdc, round(x), y, color);
             xa = round(x) + RR;
+            SetPixel(hdc, round(x), y, color);
             //drawbetzercurve( hdc, round(x), y,xa,y,color, cx, cy , RR );
-            drawBezierCurve(hdc, round(x), y, xa, y, t1, t2, t3, t4, color, cx, cy, RR);
+            drawBezierCurve(hdc, round(x), y, xa, y, t1, t2, t3, t4, color, cx, cy, RR, RR1);
         }
     }
 }
@@ -755,7 +912,7 @@ void DrawRec(HDC hdc, int xc, int yc, int dist, int dist1, COLORREF c)
     x1 = xc + dist;
     y1 = yc + dist1;
     DrawLine1(hdc, xc, yc, x1, yc, c);
-    drawbetzer(hdc, xc, yc, xc, y1, c, xc, yc, dist);
+    drawbetzer(hdc, xc, yc, xc, y1, c, xc, yc, dist, dist1);
 
     DrawLine1(hdc, xc, yc, xc, y1, c);
 
@@ -842,7 +999,7 @@ void drawhermite(HDC hdc, int xs, int ys, int xe, int ye, COLORREF color, int cx
     int dy = ye - ys;
     int yy = ye + RR;
     //SetPixel(hdc,xs,ys,color);
-    DrawHermiteCurve(hdc, xs, ys, xs, yy, color, cx, cy, RR);
+    DrawHermiteCurve2(hdc, xs, ys, xs, yy, color, cx, cy, RR);
     if (abs(dx) >= abs(dy))
     {
         int x = xs, xinc = dx > 0 ? 1 : -1;
@@ -853,7 +1010,7 @@ void drawhermite(HDC hdc, int xs, int ys, int xe, int ye, COLORREF color, int cx
             y += yinc;
             SetPixel(hdc, x, round(y), color);
             yy = round(y) + RR;
-            DrawHermiteCurve(hdc, x, round(y), x, yy, color, cx, cy, RR);
+            DrawHermiteCurve2(hdc, x, round(y), x, yy, color, cx, cy, RR);
         }
     }
     else
@@ -906,7 +1063,7 @@ void UpdateEdgeToTable(POINT p1, POINT p2, edgeTable table)
         return;
     if (p1.y > p2.y)
         swapPoints(p1, p2);
-    int slopeInverse = (p2.x - p1.x) / (double)(p2.y - p1.y);
+    double slopeInverse = (p2.x - p1.x) / (double)(p2.y - p1.y);
     double x = p1.x;
     int y = p1.y;
     while (y < p2.y)
@@ -951,71 +1108,92 @@ void FillConvexPolygon(HDC hdc, POINT PolygonPoints[], int n, COLORREF color)
     TableToScreen(hdc, table, color);
 }
 //nonConvix//
-struct Edgerec {
-    double x, ymax, minv;
-    Edgerec(double x = 0.0, double ymax = 0.0, double minv = 0.0) :x(x), ymax(ymax), minv(minv) {}
+struct EdgeRec {
+    double x, y_max, slopeInverse;
+    EdgeRec(double x = 0.0, double y_max = 0.0, double slopeInverse = 0.0)
+    {
+        this->x = x;
+        this->y_max = y_max;
+        this->slopeInverse = slopeInverse;
+    }
 };
-typedef list<Edgerec> EdgeTable[800];
-void scanEdge(POINT v1, POINT v2, EdgeTable tbl) {
-    if (v1.y == v2.y) return;
-    if (v1.y > v2.y) swap(v1, v2);
-    Edgerec rec(v1.x, v2.y, (double)(v2.x - v1.x) / (v2.y - v1.y));
-    tbl[v1.y].push_back(rec);
+typedef list<EdgeRec> EdgeTable[800];
+void scanEdge(POINT point1, POINT point2, EdgeTable table) {
+    if (point1.y == point2.y)
+    {
+        return;
+    }
+    if (point1.y > point2.y)
+    {
+        swap(point1, point2);
+    }
+    EdgeRec rec(point1.x, point2.y, (double)(point2.x - point1.x) / (point2.y - point1.y));
+    table[point1.y].push_back(rec);
 }
-
-void polygon2table(POINT p[], int n, EdgeTable tbl) {
-    POINT v1 = p[n - 1];
-    for (int i = 0; i < n; i++) {
-        POINT v2 = p[i];
-        scanEdge(v1, v2, tbl);
-        v1 = v2;
+void polygon2table(POINT point[], int n, EdgeTable table) {
+    POINT point1 = point[n - 1];
+    for (int i = 0; i < n; i++)
+    {
+        POINT point2 = point[i];
+        scanEdge(point1, point2, table);
+        point1 = point2;
     }
 }
-void table2screen(HDC hdc, EdgeTable tbl, COLORREF c) {
+
+void table2screen(HDC hdc, EdgeTable table, COLORREF c) {
     int y = 0;
+    list<EdgeRec>::iterator iterator;
 
+    while (table[y].size() == 0)
+    {
+        y++;
+    }
+    list<EdgeRec> active = table[y];
+    while (active.size() != 0) {
 
-    list<Edgerec>::iterator it;
+        active.sort([](EdgeRec& a, EdgeRec& b) {return a.x < b.x; });
 
-    while (tbl[y].size() == 0) y++;
-    list<Edgerec> activeList = tbl[y];
-    while (activeList.size() != 0) {
-
-        activeList.sort([](Edgerec& a, Edgerec& b) {return a.x < b.x; });
-
-        for (it = activeList.begin(); it != activeList.end(); it++) {
-            Edgerec& node1 = *it;
-            it++;
-            if (it == activeList.end()) break;
-            Edgerec& node2 = *it;
-            DrawLine1(hdc, ceil(node1.x), y, floor(node2.x), y, c);
+        for (iterator = active.begin(); iterator != active.end(); iterator++) {
+            EdgeRec& firstNode = *iterator;
+            iterator++;
+            if (iterator == active.end())
+            {
+                break;
+            }
+            EdgeRec& secondNode = *iterator;
+            DrawLine1(hdc, ceil(firstNode.x), y, floor(secondNode.x), y, c);
         }
-
         y++;
 
-        for (it = activeList.begin(); it != activeList.end();) {
-            if (it->ymax == y) {
-                it = activeList.erase(it);
+        for (iterator = active.begin(); iterator != active.end();)
+        {
+            if (iterator->y_max == y)
+            {
+                iterator = active.erase(iterator);
             }
-            else it++;
+            else
+            {
+                iterator++;
+            }
         }
 
-        for (it = activeList.begin(); it != activeList.end(); it++) {
-            it->x = it->x + it->minv;
+        for (iterator = active.begin(); iterator != active.end(); iterator++)
+        {
+            iterator->x = iterator->x + iterator->slopeInverse;
         }
 
-        if (tbl[y].size() != 0) {
-            activeList.splice(activeList.end(), tbl[y]);
+        if (table[y].size() != 0)
+        {
+            active.splice(active.end(), table[y]);
         }
     }
 }
 
-void fillPolygon(HDC hdc, POINT p[], int n, COLORREF c)
+void fillPolygon(HDC hdc, POINT point[], int n, COLORREF c)
 {
-    EdgeTable tbl;
-
-    polygon2table(p, n, tbl);
-    table2screen(hdc, tbl, c);
+    EdgeTable table;
+    polygon2table(point, n, table);
+    table2screen(hdc, table, c);
 
 }
 void SwapPoints(POINT& v1, POINT& v2)
@@ -1024,7 +1202,393 @@ void SwapPoints(POINT& v1, POINT& v2)
     v1 = v2;
     v2 = tmp;
 }
+////////////////////// clipping /////////////////////////
 
+int ct = 0;
+int rad, x_c, y_c;
+
+struct point
+{
+    int x;
+    int y;
+};
+struct Vertex
+{
+    double x, y;
+    Vertex(int x1 = 0, int y1 = 0)
+    {
+        x = x1;
+        y = y1;
+    }
+};
+struct shape
+{
+    int type;
+    vector<point> ptss;
+    COLORREF color;
+};
+point spefic_pt;
+shape spefic_shape;
+vector<shape> shapes;
+typedef vector<Vertex> VertexList;
+typedef bool (*IsInFunc)(Vertex& v, int edge);
+typedef Vertex(*IntersectFunc)(Vertex& v1, Vertex& v2, int edge);
+enum algorithms { pointClip, lineClip, drawCPt, drawCline };
+int clipping = pointClip;
+
+
+void add_point(int x, int y)
+{
+    spefic_pt.x = x;
+    spefic_pt.y = y;
+    spefic_shape.ptss.push_back(spefic_pt);
+}
+
+void add_shape(int shape_type, COLORREF shape_color)
+{
+    spefic_shape.type = shape_type;
+    spefic_shape.color = shape_color;
+    shapes.push_back(spefic_shape);
+    spefic_shape.ptss.clear();
+}
+int r;
+int x_1, y_1, x_2, y_2;
+int X_left, Y_top, X_right, Y_bottom;
+int X_start, Y_start, X_end, Y_end;
+
+void parametric(HDC hdc, double x1, double y1, double x2, double y2, COLORREF color)
+{
+    double dx = x2 - x1;
+    double dy = y2 - y1;
+    for (double t = 0; t < 1; t += 0.001)
+    {
+        int x = x1 + (dx * t);
+        int y = y1 + (dy * t);
+        SetPixel(hdc, x, y, color);
+    }
+}
+
+
+///////////////////////////////////////////////////// Circle ///////////////////
+
+void replace(int& x1, int& y1, int& x2, int& y2)
+{
+    int t = x1;
+    x1 = x2;
+    x2 = t;
+    t = y1;
+    y1 = y2;
+    y2 = t;
+}
+void Draw8points(HDC hdc, int x, int y, int xc, int yc, COLORREF color)
+{
+    SetPixel(hdc, xc + x, yc + y, color);
+    SetPixel(hdc, xc - x, yc + y, color);
+    SetPixel(hdc, xc + x, yc - y, color);
+    SetPixel(hdc, xc - x, yc - y, color);
+    SetPixel(hdc, xc - y, yc + x, color);
+    SetPixel(hdc, xc + y, yc - x, color);
+    SetPixel(hdc, xc + y, yc + x, color);
+    SetPixel(hdc, xc - y, yc - x, color);
+}
+void myCircle(HDC hdc, int xc, int yc, int r)
+{
+    int x = 0;
+    int y = r;
+    double d = 1 - r;
+    Draw8points(hdc, x, y, xc, yc, RGB(10, 10, 10));
+    while (x < y)
+    {
+        if (d <= 0)
+        {
+            d = d + 2 * x + 3;
+        }
+        else
+        {
+            d = d + 2 * (x - y) + 5;
+            y--;
+        }
+        x++;
+        Draw8points(hdc, x, y, xc, yc, RGB(10, 10, 10));
+    }
+}
+
+///////////////////////////////////// line clipping using CIRCLE ///////////////////////////////////////
+void DrawlineCircleClipping(HDC hdc, int x1, int y1, int x2, int y2, COLORREF c, int cx, int cy, int RR2)
+{
+    int a, b;
+    int dx = x2 - x1; // Different of x
+    int dy = y2 - y1;// Different of y
+    if (abs(dy) <= abs(dx))// if the M<1
+    {
+        if (x1 > x2)replace(x1, y1, x2, y2);
+        SetPixel(hdc, x1, y1, c);//the center
+        int x = x1;
+        while (x < x2)
+        {
+            x++;
+            double y = y1 + (double)(x - x1) * dy / dx; //y=y+m
+            a = cx - x;
+            b = cy - y;
+            if (sqrt(a * a + b * b) <= RR2)
+            {
+                SetPixel(hdc, x, Round(y), c);
+            }
+        }
+    }
+    else
+    {
+        if (y1 > y2)replace(x1, y1, x2, y2);
+        SetPixel(hdc, x1, y1, c);
+        int y = y1;
+
+        while (y < y2)
+        {
+            y++;
+            double x = x1 + (double)(y - y1) * dx / dy;//x+=1/m
+            a = cx - x;
+            b = cy - y;
+            if (sqrt(a * a + b * b) <= RR2)
+            {
+                SetPixel(hdc, Round(x), y, c);
+            }
+        }
+    }
+
+}
+
+//////////////////////////////////////// point clipping using CIRCLE ///////////////////////////////////////
+void DrawPointCircleClipping(HDC hdc, int x1, int y1, COLORREF c, int cx, int cy, int RR2)
+{
+    int a, b;
+    a = cx - x1;
+    b = cy - y1;
+    if (sqrt(a * a + b * b) <= RR2)
+    {
+        SetPixel(hdc, x1, y1, c);
+    }
+}
+
+
+void Square(HDC hdc, int x, int y, int w, int z)
+{
+    Rectangle(hdc, x, y, w, z);
+}
+
+//////////////////////////////// Point clipping using RECTANGLE //////////////////////////////////////
+void pointClippping(HDC hdc, int x, int y, int xleft, int ytop, int xright, int ybottom, COLORREF color)
+{
+    if (x >= xleft && x <= xright && y >= ytop && y <= ybottom)
+
+        SetPixel(hdc, x, y, color);
+}
+
+///////////////////////////////// line clipping using RECTANGLE ///////////////////////////////////
+union OutCode
+{
+    unsigned All : 4;
+    struct
+    {
+        unsigned left : 1, top : 1, right : 1, bottom : 1;
+    };
+};
+
+OutCode GetOutCode(double x, double y, int xleft, int ytop, int xright, int ybottom)
+{
+    OutCode obj;
+    obj.All = 0;
+    if (x > xright)
+        obj.right = 1;
+    else if (x < xleft)
+        obj.left = 1;
+    if (y < ytop)
+        obj.top = 1;
+    else if (y > ybottom)
+        obj.bottom = 1;
+    return obj;
+}
+
+void VIntersect(double xs, double ys, double xe, double ye, int x, double* xi, double* yi)
+{
+    *xi = x;
+    *yi = ys + (x - xs) * (ye - ys) / (xe - xs);
+}
+
+void HIntersect(double xs, double ys, double xe, double ye, int y, double* xi, double* yi)
+{
+    *yi = y;
+    *xi = xs + (y - ys) * (xe - xs) / (ye - ys);
+}
+
+void lineClippping(HDC hdc, int xs, int ys, int xe, int ye, int xleft, int ytop, int xright, int ybottom, COLORREF color)
+{
+    double x1 = xs, y1 = ys, x2 = xe, y2 = ye;
+    OutCode out1 = GetOutCode(x1, y1, xleft, ytop, xright, ybottom);
+    OutCode out2 = GetOutCode(x2, y2, xleft, ytop, xright, ybottom);
+    while ((out1.All || out2.All) && !(out1.All & out2.All))
+    {
+        double xi, yi;
+        if (out1.All)
+        {
+            if (out1.left)
+                VIntersect(x1, y1, x2, y2, xleft, &xi, &yi);
+            else if (out1.top)
+                HIntersect(x1, y1, x2, y2, ytop, &xi, &yi);
+            else if (out1.right)
+                VIntersect(x1, y1, x2, y2, xright, &xi, &yi);
+            else
+                HIntersect(x1, y1, x2, y2, ybottom, &xi, &yi);
+            x1 = xi;
+            y1 = yi;
+            out1 = GetOutCode(x1, y1, xleft, ytop, xright, ybottom);
+        }
+        else
+        {
+            if (out2.left)
+                VIntersect(x1, y1, x2, y2, xleft, &xi, &yi);
+            else if (out2.top)
+                HIntersect(x1, y1, x2, y2, ytop, &xi, &yi);
+            else if (out2.right)
+                VIntersect(x1, y1, x2, y2, xright, &xi, &yi);
+            else
+                HIntersect(x1, y1, x2, y2, ybottom, &xi, &yi);
+            x2 = xi;
+            y2 = yi;
+            out2 = GetOutCode(x2, y2, xleft, ytop, xright, ybottom);
+        }
+    }
+    if (!out1.All && !out2.All)
+    {
+        parametric(hdc, round(x1), round(y1), round(x2), round(y2), color);
+    }
+}
+void draw_ptss(HDC hdc)
+{
+    for (int i = 0; i < shapes.size(); ++i)
+    {
+        switch (shapes[i].type)
+        {
+        case pointClip:
+        {
+            X_left = shapes[i].ptss[0].x;
+            Y_top = shapes[i].ptss[0].y;
+            X_right = shapes[i].ptss[1].x;
+            Y_bottom = shapes[i].ptss[1].y;
+
+            Rectangle(hdc, X_left, Y_top, X_right, Y_bottom);
+            break;
+        }
+
+        case drawCPt:
+        {
+            pointClippping(hdc, shapes[i].ptss[0].x, shapes[i].ptss[0].y, X_left, Y_top, X_right, Y_bottom, shapes[i].color);
+            break;
+        }
+
+        case lineClip:
+        {
+            X_left = shapes[i].ptss[0].x;
+            Y_top = shapes[i].ptss[0].y;
+            X_right = shapes[i].ptss[1].x;
+            Y_bottom = shapes[i].ptss[1].y;
+
+            Rectangle(hdc, X_left, Y_top, X_right, Y_bottom);
+            break;
+        }
+
+        case drawCline:
+        {
+            X_start = shapes[i].ptss[0].x;
+            Y_start = shapes[i].ptss[0].y;
+            X_end = shapes[i].ptss[1].x;
+            Y_end = shapes[i].ptss[1].y;
+
+            lineClippping(hdc, X_start, Y_start, X_end, Y_end, X_left, Y_top, X_right, Y_bottom, shapes[i].color);
+            break;
+        }
+
+
+        default:
+            break;
+        }
+    }
+}
+
+////////////////////////////////////////////// POLYGOOOOOOOOON clipping using RECTANGLE  ////////////////////////////
+
+
+VertexList ClipWithEdge(VertexList p, int edge, IsInFunc In, IntersectFunc Intersect)
+{
+    VertexList OutList;
+    Vertex v1 = p[p.size() - 1];
+    bool v1_in = In(v1, edge);
+    for (int i = 0; i < (int)p.size(); i++)
+    {
+        Vertex v2 = p[i];
+        bool v2_in = In(v2, edge);
+        if (!v1_in && v2_in)
+        {
+            OutList.push_back(Intersect(v1, v2, edge));
+            OutList.push_back(v2);
+        }
+        else if (v1_in && v2_in) OutList.push_back(v2);
+        else if (v1_in) OutList.push_back(Intersect(v1, v2, edge));
+        v1 = v2;
+        v1_in = v2_in;
+    }
+    return OutList;
+}
+
+bool InLeft(Vertex& v, int edge)
+{
+    return v.x >= edge;
+}
+bool InRight(Vertex& v, int edge)
+{
+    return v.x <= edge;
+}
+bool InTop(Vertex& v, int edge)
+{
+    return v.y >= edge;
+}
+bool InBottom(Vertex& v, int edge)
+{
+    return v.y <= edge;
+}
+
+Vertex VIntersect(Vertex& v1, Vertex& v2, int xedge)
+{
+    Vertex res;
+    res.x = xedge;
+    res.y = v1.y + (xedge - v1.x) * (v2.y - v1.y) / (v2.x - v1.x);
+    return res;
+}
+Vertex HIntersect(Vertex& v1, Vertex& v2, int yedge)
+{
+    Vertex res;
+    res.y = yedge;
+    res.x = v1.x + (yedge - v1.y) * (v2.x - v1.x) / (v2.y - v1.y);
+    return res;
+}
+
+void PolygonClip(HDC hdc, POINT* p, int n, int xleft, int ytop, int xright, int ybottom, COLORREF color)
+{
+    VertexList vlist;
+    for (int i = 0; i < n; i++)vlist.push_back(Vertex(p[i].x, p[i].y));
+    vlist = ClipWithEdge(vlist, xleft, InLeft, VIntersect);
+    vlist = ClipWithEdge(vlist, ytop, InTop, HIntersect);
+    vlist = ClipWithEdge(vlist, xright, InRight, VIntersect);
+    vlist = ClipWithEdge(vlist, ybottom, InBottom, HIntersect);
+    Vertex v1 = vlist[vlist.size() - 1];
+    for (int i = 0; i < (int)vlist.size(); i++)
+    {
+        Vertex v2 = vlist[i];
+        MoveToEx(hdc, Round(v1.x), Round(v1.y), NULL);
+        LineTo(hdc, Round(v2.x), Round(v2.y));
+        v1 = v2;
+    }
+}
+////////////////////// End of Clipping ////////////////////
 
 /*--------------------save and load----------------------*/
 bool HDCToFile(const char* FilePath, HDC Context, RECT Area, uint16_t BitsPerPixel)
@@ -1069,7 +1633,7 @@ bool HDCToFile(const char* FilePath, HDC Context, RECT Area, uint16_t BitsPerPix
     return false;
 }
 
-void load(HWND hWnd, HDC& hdc)
+void LoadWindow(HWND hWnd, HDC& hdc)
 {
     string fileName = "picture.bmp";
     if (fileName == "")
@@ -1094,74 +1658,79 @@ HMENU list_;
 void AddMenus(HWND hwnd)
 {
     list_ = CreateMenu();
-    HMENU color_list = CreateMenu();
-    HMENU circle_list = CreateMenu();
-    HMENU line_list = CreateMenu();
-    HMENU Ellipse_list = CreateMenu();
-    HMENU Filling_list = CreateMenu();
-    HMENU Quarter_list = CreateMenu();
-    HMENU clipping_list = CreateMenu();
-    HMENU Clear_list = CreateMenu();
+    HMENU ListOfColors = CreateMenu();
+    HMENU ListOfCircles = CreateMenu();
+    HMENU ListOfLines = CreateMenu();
+    HMENU ListOfEllipse = CreateMenu();
+    HMENU ListOfFillings = CreateMenu();
+    HMENU QuarterNo = CreateMenu();
+    HMENU ListOfClipping = CreateMenu();
+    HMENU Spline_menu = CreateMenu();
+    HMENU ListOfTools = CreateMenu();
 
-    AppendMenu(color_list, MF_STRING, 0, L"RED");
-    AppendMenu(color_list, MF_STRING, 1, L"Green");
-    AppendMenu(color_list, MF_STRING, 2, L"Blue");              // colors
-    AppendMenu(color_list, MF_STRING, 3, L"Yellow");
-    AppendMenu(color_list, MF_STRING, 4, L"Black");
-    AppendMenu(color_list, MF_STRING, 5, L"Orange");
-    AppendMenu(list_, MF_POPUP, (UINT_PTR)color_list, L"Color");
+    AppendMenu(ListOfColors, MF_STRING, 0, L"Orange");
+    AppendMenu(ListOfColors, MF_STRING, 1, L"Black");
+    AppendMenu(ListOfColors, MF_STRING, 2, L"Yellow");              // colors
+    AppendMenu(ListOfColors, MF_STRING, 3, L"Blue");
+    AppendMenu(ListOfColors, MF_STRING, 4, L"Green");
+    AppendMenu(ListOfColors, MF_STRING, 5, L"Red");
+    AppendMenu(list_, MF_POPUP, (UINT_PTR)ListOfColors, L"COLOR");
 
     /////////////////////////////////////
-    AppendMenu(circle_list, MF_STRING, 6, L"Direct");
-    AppendMenu(circle_list, MF_STRING, 7, L"Polar");
-    AppendMenu(circle_list, MF_STRING, 8, L"Iterative Polar");
-    AppendMenu(circle_list, MF_STRING, 9, L"MidPoint");                    //circles
-    AppendMenu(circle_list, MF_STRING, 10, L" MidPoint Modification");
-    AppendMenu(list_, MF_POPUP, (UINT_PTR)circle_list, L"Circle");
+    AppendMenu(ListOfCircles, MF_STRING, 6, L"Direct");
+    AppendMenu(ListOfCircles, MF_STRING, 7, L"Polar");
+    AppendMenu(ListOfCircles, MF_STRING, 8, L"Iterative Polar");
+    AppendMenu(ListOfCircles, MF_STRING, 9, L"MidPoint");                    //circles
+    AppendMenu(ListOfCircles, MF_STRING, 10, L" MidPoint Modification");
+    AppendMenu(list_, MF_POPUP, (UINT_PTR)ListOfCircles, L"CIRCLE");
     /////////////////////////////////////
-    AppendMenu(line_list, MF_STRING, 11, L"DDA");
-    AppendMenu(line_list, MF_STRING, 12, L"MidPoint");
-    AppendMenu(line_list, MF_STRING, 13, L"Parametric");
-    AppendMenu(list_, MF_POPUP, (UINT_PTR)line_list, L"Lines");
+    AppendMenu(ListOfLines, MF_STRING, 11, L"DDA");
+    AppendMenu(ListOfLines, MF_STRING, 12, L"MidPoint");
+    AppendMenu(ListOfLines, MF_STRING, 13, L"Parametric");
+    AppendMenu(list_, MF_POPUP, (UINT_PTR)ListOfLines, L"LINES");
     /////////////////////////////////////
 
-    AppendMenu(Ellipse_list, MF_STRING, 14, L"Direct");
-    AppendMenu(Ellipse_list, MF_STRING, 15, L"Polar");
-    AppendMenu(Ellipse_list, MF_STRING, 16, L"MidPoint");
-    AppendMenu(list_, MF_POPUP, (UINT_PTR)Ellipse_list, L"Ellipse");
+    AppendMenu(ListOfEllipse, MF_STRING, 14, L"Direct");
+    AppendMenu(ListOfEllipse, MF_STRING, 15, L"Polar");
+    AppendMenu(ListOfEllipse, MF_STRING, 16, L"MidPoint");
+    AppendMenu(list_, MF_POPUP, (UINT_PTR)ListOfEllipse, L"ELLIPSE");
 
-    AppendMenu(Quarter_list, MF_STRING, 17, L"1");
-    AppendMenu(Quarter_list, MF_STRING, 18, L"2");
-    AppendMenu(Quarter_list, MF_STRING, 19, L"3");
-    AppendMenu(Quarter_list, MF_STRING, 20, L"4");
-    AppendMenu(list_, MF_POPUP, (UINT_PTR)Quarter_list, L"Quarters");
-
-
-    AppendMenu(Filling_list, MF_STRING, 21, L"Filling quarter with lines");
-    AppendMenu(Filling_list, MF_STRING, 22, L"Filling quarter with circles");
-    AppendMenu(Filling_list, MF_STRING, 23, L"Filling Square with Hermit Curve");
-    AppendMenu(Filling_list, MF_STRING, 24, L"Filling Rectangle with Bezier Curve");
-    AppendMenu(Filling_list, MF_STRING, 25, L"flood fill - recursive");//flood fill
-    AppendMenu(Filling_list, MF_STRING, 26, L"flood fill - non recursive");//flood fill
-    AppendMenu(Filling_list, MF_STRING, 27, L"Filling General Polygon");
-    AppendMenu(Filling_list, MF_STRING, 28, L"Filling Convex Polygon");
-    AppendMenu(list_, MF_POPUP, (UINT_PTR)Filling_list, L"Fillings");
-
-    AppendMenu(clipping_list, MF_STRING, 29, L"Clipping polygon with ractangle window");
-    AppendMenu(clipping_list, MF_STRING, 30, L"Clipping line with ractangle window");
-    AppendMenu(clipping_list, MF_STRING, 31, L"Clipping point with ractangle window");
-    AppendMenu(clipping_list, MF_STRING, 32, L"Clipping line with square window");
-    AppendMenu(clipping_list, MF_STRING, 33, L"Clipping point with square window");
-    AppendMenu(list_, MF_POPUP, (UINT_PTR)clipping_list, L"clipping");
+    AppendMenu(QuarterNo, MF_STRING, 17, L"first quarter");
+    AppendMenu(QuarterNo, MF_STRING, 18, L"second quarter");
+    AppendMenu(QuarterNo, MF_STRING, 19, L"third quarter");
+    AppendMenu(QuarterNo, MF_STRING, 20, L"fourth quarter");
+    AppendMenu(list_, MF_POPUP, (UINT_PTR)QuarterNo, L"QUARTERS");
 
 
 
+    AppendMenu(ListOfFillings, MF_STRING, 21, L"Filling Circle Quarter with lines");
+    AppendMenu(ListOfFillings, MF_STRING, 22, L"Filling Circle Quarter with circles");
+    AppendMenu(ListOfFillings, MF_STRING, 23, L"Filling Square with Hermit Curve");
+    AppendMenu(ListOfFillings, MF_STRING, 24, L"Filling Rectangle with Bezier Curve");
+    AppendMenu(ListOfFillings, MF_STRING, 25, L"recursive flood fill");//flood fill
+    AppendMenu(ListOfFillings, MF_STRING, 26, L" Non Recursive flood fill");//flood fill
+    AppendMenu(ListOfFillings, MF_STRING, 27, L"Non convex Polygon filling");
+    AppendMenu(ListOfFillings, MF_STRING, 28, L"Convex Polygon filling");
+    AppendMenu(list_, MF_POPUP, (UINT_PTR)ListOfFillings, L"FILLINGS");
 
-    AppendMenu(Clear_list, MF_STRING, 37, L"Clear");
-    AppendMenu(Clear_list, MF_STRING, 38, L"Save");
-    AppendMenu(Clear_list, MF_STRING, 39, L"Load");
+    AppendMenu(ListOfClipping, MF_STRING, 29, L"Clipping polygon with ractangle window");
+    AppendMenu(ListOfClipping, MF_STRING, 30, L"Clipping line with ractangle window");
+    AppendMenu(ListOfClipping, MF_STRING, 31, L"Clipping point with ractangle window");
+    AppendMenu(ListOfClipping, MF_STRING, 32, L"Clipping line with square window");
+    AppendMenu(ListOfClipping, MF_STRING, 33, L"Clipping point with square window");
+    AppendMenu(ListOfClipping, MF_STRING, 34, L"Clipping line with circle window");
+    AppendMenu(ListOfClipping, MF_STRING, 35, L"Clipping point with circle window");
+    AppendMenu(list_, MF_POPUP, (UINT_PTR)ListOfClipping, L"CLIPPING");
 
-    AppendMenu(list_, MF_POPUP, (UINT_PTR)Clear_list, L"Clear");
+    AppendMenu(Spline_menu, MF_STRING, 36, L"spline curve");
+    AppendMenu(list_, MF_POPUP, (UINT_PTR)Spline_menu, L"Splines");
+
+
+    AppendMenu(ListOfTools, MF_STRING, 37, L"Clear");
+    AppendMenu(ListOfTools, MF_STRING, 38, L"Save");
+    AppendMenu(ListOfTools, MF_STRING, 39, L"Load");
+
+    AppendMenu(list_, MF_POPUP, (UINT_PTR)ListOfTools, L"TOOLS");
 
     SetMenu(hwnd, list_);
 
@@ -1172,10 +1741,12 @@ void AddMenus(HWND hwnd)
 
 
 COLORREF color = RGB(0, 0, 0);
-int case_number, quarter = 1;
+int number_of_rule, quarter = 1;
 int R, A, B, x, x2, x3, y, y2, y3, counter = 0;
 int Num_of_Points = 0;
 POINT P[5];
+Vector8 Pt[4];
+bool poly = true;
 LRESULT CALLBACK WindowProcedure(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
     HDC hdc = GetDC(hwnd);
@@ -1190,209 +1761,204 @@ LRESULT CALLBACK WindowProcedure(HWND hwnd, UINT message, WPARAM wParam, LPARAM 
         switch (wParam)
         {
         case  (0):
-            color = RGB(255, 0, 0);
-            cout << "You are use Red color " << endl;
+            color = RGB(255, 160, 0);
+            cout << "Orange color is being used" << endl;
             break;
         case  (1):
-            color = RGB(0, 110, 0);
-            cout << "You are use Green color" << endl;
+            color = RGB(0, 0, 0);
+            cout << "Black color is being used" << endl;
             break;
         case  (2):
-            color = RGB(0, 0, 255);
-            cout << "You are use Blue color" << endl;
+            color = RGB(255, 255, 0);
+            cout << "Yellow color is being used" << endl;
             break;
         case  (3):
-            color = RGB(255, 255, 0);
-            cout << "You are use Yellow color" << endl;
+            color = RGB(0, 0, 255);
+            cout << "Blue color is being used" << endl;
             break;
         case  (4):
-            color = RGB(0, 0, 0);
-            cout << "You are use Black color" << endl;
+            color = RGB(0, 115, 0);
+            cout << "Green color is being used" << endl;
             break;
-
         case  (5):
-            color = RGB(255, 165, 0);
-            cout << "You are use Orange color" << endl;
+            color = RGB(255, 0, 0);
+            cout << "Red color is being used" << endl;
             break;
-
         case  (6):
-            case_number = 6;
-            cout << "You can Draw circle using Direct Algorithm...." << endl;
+            number_of_rule = 6;
+            cout << "Drawing circle using Direct Algorithm...." << endl;
             break;
         case  (7):
-            case_number = 7;
-            cout << "You can Draw circle using Polar Algorithm...." << endl;
+            number_of_rule = 7;
+            cout << "Drawing circle using Polar Algorithm...." << endl;
             break;
 
         case  (8):
-            case_number = 8;
-            cout << "You can Draw circle using Iterative Polar Algorithm...." << endl;
+            number_of_rule = 8;
+            cout << "Drawing circle using Iterative Polar Algorithm...." << endl;
 
             break;
         case  (9):
-            case_number = 9;
-            cout << "You can Draw circle using MidPoint Algorithm....." << endl;
+            number_of_rule = 9;
+            cout << "Drawing circle using MidPoint Algorithm....." << endl;
 
             break;
         case  (10):
-            case_number = 10;
-            cout << "You can Draw circle using MidPoint Algorithm....." << endl;
+            number_of_rule = 10;
+            cout << "Drawing circle using MidPoint faster Algorithm....." << endl;
 
             break;
         case  (11):
-            case_number = 11;
-            cout << "You can Draw circle using MidPoint Algorithm....." << endl;
+            number_of_rule = 11;
+            cout << "Drawing circle using DDA Algorithm....." << endl;
 
             break;
         case  (12):
-            case_number = 12;
-            cout << "You can Draw circle using MidPoint Algorithm....." << endl;
+            number_of_rule = 12;
+            cout << "Drawing line using midpoint Algorithm....." << endl;
 
             break;
         case  (13):
-            case_number = 13;
-            cout << "You can Draw circle using MidPoint Algorithm....." << endl;
+            number_of_rule = 13;
+            cout << "Drawing line using parametric Algorithm....." << endl;
 
             break;
         case  (14):
-            case_number = 14;
-            cout << "You can Draw circle using MidPoint Algorithm....." << endl;
+            number_of_rule = 14;
+            cout << "Drawing ellipse using direct Algorithm....." << endl;
 
             break;
         case  (15):
-            case_number = 15;
-            cout << "You can Draw circle using MidPoint Modification Algorithm....." << endl;
+            number_of_rule = 15;
+            cout << "Drawing ellipse using polar Algorithm....." << endl;
 
             break;
         case  (16):
-            case_number = 16;
-            cout << "You can Draw circle using MidPoint Modification Algorithm....." << endl;
+            number_of_rule = 16;
+            cout << "Drawing ellipse using midpoint Algorithm....." << endl;
 
             break;
         case  (17):
             quarter = 1;
-            cout << "You can Draw circle using MidPoint Modification Algorithm....." << endl;
+            cout << "choose first quarter of a circle....." << endl;
 
             break;
 
         case  (18):
             quarter = 2;
-            cout << "You can Draw circle using MidPoint Modification Algorithm....." << endl;
+            cout << "choose second quarter of a circle....." << endl;
 
             break;
         case  (19):
             quarter = 3;
-            cout << "You can Draw circle using MidPoint Modification Algorithm....." << endl;
+            cout << "choose third quarter of a circle....." << endl;
 
             break;
         case  (20):
             quarter = 4;
-            cout << "You can Draw circle using MidPoint Modification Algorithm....." << endl;
+            cout << "choose fourth quarter of a circle....." << endl;
 
             break;
         case  (21):
-            case_number = 21;
-            cout << "You can Draw circle using MidPoint Modification Algorithm....." << endl;
-
+            number_of_rule = 21;
+            cout << "filling quarter with lines....." << endl;
             break;
         case  (22):
-            case_number = 22;
-            cout << "You can Draw circle using MidPoint Modification Algorithm....." << endl;
+            number_of_rule = 22;
+            cout << "filling quarter with circles....." << endl;
 
             break;
         case  (23):
-            case_number = 23;
-            cout << "You can Draw circle using MidPoint Modification Algorithm....." << endl;
+            number_of_rule = 23;
+            cout << "filling square with hermite curve....." << endl;
 
             break;
         case  (24):
-            case_number = 24;
-            cout << "You can Draw circle using MidPoint Modification Algorithm....." << endl;
+            number_of_rule = 24;
+            cout << "filling rectangle with bezier curve....." << endl;
 
             break;
         case  (25):
-            case_number = 25;
-            cout << "You can Draw circle using MidPoint Modification Algorithm....." << endl;
+            number_of_rule = 25;
+            cout << "recursive flood filling....." << endl;
 
             break;
         case  (26):
-            case_number = 26;
-            cout << "You can Draw circle using MidPoint Modification Algorithm....." << endl;
+            number_of_rule = 26;
+            cout << "non recursive flood filling....." << endl;
 
             break;
         case  (27):
-            case_number = 27;
-            cout << "You can Draw circle using MidPoint Modification Algorithm....." << endl;
+            number_of_rule = 27;
+            cout << "non convex filling....." << endl;
 
             break;
         case  (28):
-            case_number = 28;
-            cout << "You can Draw circle using MidPoint Modification Algorithm....." << endl;
+            number_of_rule = 28;
+            cout << "convex filling....." << endl;
 
             break;
         case  (29):
-            case_number = 29;
-            cout << "You can Draw circle using MidPoint Modification Algorithm....." << endl;
+            number_of_rule = 29;
+            cout << "clipping polygons in a rectangle window....." << endl;
 
             break;
         case  (30):
-            case_number = 30;
-            cout << "You can Draw circle using MidPoint Modification Algorithm....." << endl;
+            number_of_rule = 30;
+            cout << "clipping lines in a rectangle window....." << endl;
 
             break;
         case  (31):
-            case_number = 31;
-            cout << "You can Draw circle using MidPoint Modification Algorithm....." << endl;
+            number_of_rule = 31;
+            cout << "clipping points in a rectangle window....." << endl;
 
             break;
         case  (32):
-            case_number = 32;
-            cout << "You can Draw circle using MidPoint Modification Algorithm....." << endl;
+            number_of_rule = 32;
+            cout << "clipping lines in a square window....." << endl;
 
             break;
         case  (33):
-            case_number = 33;
-            cout << "You can Draw circle using MidPoint Modification Algorithm....." << endl;
+            number_of_rule = 33;
+            cout << "clipping points in a square window....." << endl;
 
             break;
         case  (34):
-            case_number = 34;
-            cout << "You can Draw circle using MidPoint Modification Algorithm....." << endl;
+            number_of_rule = 34;
+            cout << "clipping line in a circle window....." << endl;
 
             break;
         case  (35):
-            case_number = 35;
-            cout << "You can Draw circle using MidPoint Modification Algorithm....." << endl;
+            number_of_rule = 35;
+            cout << "clipping points in a circle window....." << endl;
 
             break;
         case  (36):
-            case_number = 36;
-            cout << "You can Draw circle using MidPoint Modification Algorithm....." << endl;
+            number_of_rule = 36;
+            cout << "drawing spline....." << endl;
 
             break;
-
         case  (37):
             InvalidateRect(hwnd, NULL, TRUE);
             cout << "Window is clear now ...." << endl;
 
             break;
         case  (38):
-            RECT rect;
-            if (GetWindowRect(hwnd, &rect)) {
+            RECT rectangle;
+            if (GetWindowRect(hwnd, &rectangle)) {
 
-                rect.top += 10;
-                rect.left += 10;
-                HDCToFile("picture.bmp", hdc, rect, 24);
+                rectangle.top += 10;
+                rectangle.left += 10;
+                HDCToFile("picture.bmp", hdc, rectangle, 24);
                 ReleaseDC(hwnd, hdc);
             }
             break;
         case  (39):
-            load(hwnd, hdc);
-
+            LoadWindow(hwnd, hdc);
             break;
         }
     case WM_LBUTTONDOWN:
-        if (case_number >= 6 && case_number <= 16 || (case_number >= 21 && case_number <= 26)) //  (Direct, Polar, iterative Polar, midpoint and modified Midpoint)
+        if ((number_of_rule >= 6 && number_of_rule <= 16) || (number_of_rule >= 21 && number_of_rule <= 26)) //  (Direct, Polar, iterative Polar, midpoint and modified Midpoint)
         {
             x = LOWORD(lParam);
             y = HIWORD(lParam);
@@ -1400,7 +1966,7 @@ LRESULT CALLBACK WindowProcedure(HWND hwnd, UINT message, WPARAM wParam, LPARAM 
         break;
 
     case WM_RBUTTONDOWN:
-        if (case_number >= 14 && case_number <= 16) //ellipse
+        if (number_of_rule >= 14 && number_of_rule <= 16) //ellipse
         {
             if (counter == 0) {
                 x2 = LOWORD(lParam);
@@ -1412,34 +1978,34 @@ LRESULT CALLBACK WindowProcedure(HWND hwnd, UINT message, WPARAM wParam, LPARAM 
                 x3 = LOWORD(lParam);
                 y3 = HIWORD(lParam);
                 B = Round(std::sqrt(std::pow(x3 - x, 2.0) + pow(y3 - y, 2.0)));
-                if (case_number == 14)
+                if (number_of_rule == 14)
                     DrawEllipseCartesian(hdc, x, y, A, B, color);
-                else if (case_number == 15)
+                else if (number_of_rule == 15)
                     DrawEllipsePolar(hdc, x, y, A, B, color);
                 else
-                    DrawMidpointEllipse(hdc, x, y, A, B, color);
+                    DrawEllipseBresenham(hdc, x, y, A, B, color);
                 counter = 0;
             }
         }
-        if (case_number == 11)
+        if (number_of_rule == 11)
         {
             x2 = LOWORD(lParam);
             y2 = HIWORD(lParam);
             SimpleDDA(hdc, x, y, x2, y2, color);
         }
-        if (case_number == 12)
+        if (number_of_rule == 12)
         {
             x2 = LOWORD(lParam);
             y2 = HIWORD(lParam);
-            MidpointLine(hdc, x, y, x2, y2, color);
+            DrawLineBresenham(hdc, x, y, x2, y2, color);
         }
-        if (case_number == 13)
+        if (number_of_rule == 13)
         {
             x2 = LOWORD(lParam);
             y2 = HIWORD(lParam);
             DrawLineParametric(hdc, x, y, x2, y2, color);
         }
-        if (case_number == 6) {
+        if (number_of_rule == 6) {
             x2 = LOWORD(lParam);
             y2 = HIWORD(lParam);
             x2 = (x2 - x) * (x2 - x);
@@ -1448,7 +2014,7 @@ LRESULT CALLBACK WindowProcedure(HWND hwnd, UINT message, WPARAM wParam, LPARAM 
 
             CircleDirect(hdc, x, y, R, color);
         }
-        if (case_number == 7)//circleiter
+        if (number_of_rule == 7)//circleiter
         {
             x2 = LOWORD(lParam);
             y2 = HIWORD(lParam);
@@ -1458,7 +2024,7 @@ LRESULT CALLBACK WindowProcedure(HWND hwnd, UINT message, WPARAM wParam, LPARAM 
             CirclePolar(hdc, x, y, R, color);
 
         }
-        if (case_number == 8)//circleitrativepolar
+        if (number_of_rule == 8)//circleitrativepolar
         {
             x2 = LOWORD(lParam);
             y2 = HIWORD(lParam);
@@ -1468,7 +2034,7 @@ LRESULT CALLBACK WindowProcedure(HWND hwnd, UINT message, WPARAM wParam, LPARAM 
             CircleIterativePolar(hdc, x, y, R, color);
 
         }
-        if (case_number == 9)//circleBresenham
+        if (number_of_rule == 9)//circleBresenham
         {
             x2 = LOWORD(lParam);
             y2 = HIWORD(lParam);
@@ -1477,7 +2043,7 @@ LRESULT CALLBACK WindowProcedure(HWND hwnd, UINT message, WPARAM wParam, LPARAM 
             R = sqrt(x2 + y2);
             CircleBresenham(hdc, x, y, R, color);
         }
-        if (case_number == 10)// circleFasterVresenhamfaster
+        if (number_of_rule == 10)// circleFasterVresenhamfaster
         {
             x2 = LOWORD(lParam);
             y2 = HIWORD(lParam);
@@ -1486,45 +2052,44 @@ LRESULT CALLBACK WindowProcedure(HWND hwnd, UINT message, WPARAM wParam, LPARAM 
             R = sqrt(x2 + y2);
             CircleFasterBresenham(hdc, x, y, R, color);
         }
-        if (case_number == 21 || case_number == 22)// circle with quarter
+        if (number_of_rule == 21 || number_of_rule == 22)// circle with quarter
         {
             x2 = LOWORD(lParam);
             y2 = HIWORD(lParam);
             x2 = (x2 - x) * (x2 - x);
             y2 = (y2 - y) * (y2 - y);
             R = sqrt(x2 + y2);
-            if (case_number == 21)
+            if (number_of_rule == 21)
                 DrawCircleAndFillItWithLines(hdc, x, y, R, color, quarter);
             else
                 DrawCircleAndFillItWithCircles(hdc, x, y, R, color, quarter);
         }
-        if (case_number == 23)
+        if (number_of_rule == 23)
         {
             x2 = LOWORD(lParam) - x;
             y2 = HIWORD(lParam) - y;
             R = sqrt(x2 * x2 + y2 * y2);
             DrawSquare(hdc, x, y, R, color);
         }
-        if (case_number == 24)
+        if (number_of_rule == 24)
         {
             x2 = LOWORD(lParam) - x;
             y2 = HIWORD(lParam) - y;
-            R = sqrt(x2 * x2 + y2 * y2);
-            DrawRec(hdc, x, y, R, 100, color);
+            DrawRec(hdc, x, y, x2, y2, color);
         }
-        if (case_number == 25)
+        if (number_of_rule == 25)
         {
             x2 = LOWORD(lParam);
             y2 = HIWORD(lParam);
             RecursiveFloodFill(hdc, x2, y2, color, RGB(255, 0, 0));
         }
-        if (case_number == 26)
+        if (number_of_rule == 26)
         {
             x2 = LOWORD(lParam);
             y2 = HIWORD(lParam);
             NonRecursiveFloodFill(hdc, x2, y2, color, RGB(255, 0, 0));
         }
-        else if (case_number == 27 || case_number == 28)
+        else if (number_of_rule == 27 || number_of_rule == 28)
         {
             if (Num_of_Points == 0)
             {
@@ -1549,11 +2114,6 @@ LRESULT CALLBACK WindowProcedure(HWND hwnd, UINT message, WPARAM wParam, LPARAM 
                 P[3].x = LOWORD(lParam);
                 P[3].y = HIWORD(lParam);
                 Num_of_Points++;
-                /*
-                SelectObject(hdc, GetStockObject(DC_PEN));
-                SetDCPenColor(hdc, color);
-                Polygon(hdc, P, 4);
-                FillConvexPolygon(hdc, P, 4, color);*/
             }
             else if (Num_of_Points == 4)
             {
@@ -1568,11 +2128,278 @@ LRESULT CALLBACK WindowProcedure(HWND hwnd, UINT message, WPARAM wParam, LPARAM 
             else if (Num_of_Points == 5)
             {
                 //fill polygon
-                if (case_number == 27)
+                if (number_of_rule == 27)
                     fillPolygon(hdc, P, 5, color);
                 else
                     FillConvexPolygon(hdc, P, 5, color);
+                Num_of_Points = 0;
             }
+        }
+        else if (number_of_rule == 29) //rectangle window
+        {
+            if (ct == 0)
+            {
+                // code for start point of rectangular
+                X_left = LOWORD(lParam);
+                Y_top = HIWORD(lParam);
+                add_point(X_left, Y_top);
+                ct++;
+            }
+            else if (ct == 1)
+            {
+                // code for end point of rectangular
+                X_right = LOWORD(lParam);
+                Y_bottom = HIWORD(lParam);
+                add_point(X_right, Y_bottom);
+                Rectangle(hdc, X_left, Y_top, X_right, Y_bottom);
+                add_shape(clipping, color);
+                ct++;
+            }
+            else {
+                P[ct - 2].x = LOWORD(lParam);
+                P[ct - 2].y = HIWORD(lParam);
+                if (ct == 6)
+                {
+                    PolygonClip(hdc, P, 5, X_left, Y_top, X_right, Y_bottom, color);
+                    ct = 0;
+                    poly = false;
+                }
+                else ct++;
+            }
+        }
+        else if (number_of_rule == 30)
+        {
+            if (ct == 0)
+            {
+                // code for start point of rectangular
+                X_left = LOWORD(lParam);
+                Y_top = HIWORD(lParam);
+                add_point(X_left, Y_top);
+                ct++;
+            }
+            else if (ct == 1)
+            {
+                // code for end point of rectangular
+                X_right = LOWORD(lParam);
+                Y_bottom = HIWORD(lParam);
+                add_point(X_right, Y_bottom);
+                Rectangle(hdc, X_left, Y_top, X_right, Y_bottom);
+                add_shape(clipping, RGB(0, 0, 0));
+                ct++;
+
+            }
+            else if (ct == 2)
+            {
+                // code for start point of lines
+                X_start = LOWORD(lParam);
+                Y_start = HIWORD(lParam);
+                add_point(X_start, Y_start);
+                ct++;
+
+            }
+            else if (ct == 3)
+            {
+                // code for end point of lines
+                X_end = LOWORD(lParam);
+                Y_end = HIWORD(lParam);
+                add_point(X_end, Y_end);
+                lineClippping(hdc, X_start, Y_start, X_end, Y_end, X_left, Y_top, X_right, Y_bottom, color);
+                // resets by default when changing the algorithm (many lines)
+                add_shape(drawCline, color);
+                ct = 0;
+
+            }
+        }
+        else if (number_of_rule == 31)
+        {
+            if (ct == 0)
+            {
+                // code for start point of rectangular
+                X_left = LOWORD(lParam);
+                Y_top = HIWORD(lParam);
+                add_point(X_left, Y_top);
+                ct++;
+            }
+            else if (ct == 1)
+            {
+                // code for end point of rectangular
+                X_right = LOWORD(lParam);
+                Y_bottom = HIWORD(lParam);
+                add_point(X_right, Y_bottom);
+                Rectangle(hdc, X_left, Y_top, X_right, Y_bottom);
+                add_shape(clipping, color);
+                ct++;
+            }
+            else if (ct == 2)
+            {
+                // code for points
+                x_1 = LOWORD(lParam);
+                y_1 = HIWORD(lParam);
+                add_point(x_1, y_1);
+                pointClippping(hdc, x_1, y_1, X_left, Y_top, X_right, Y_bottom, color);
+                add_shape(drawCPt, color);
+                ct = 0;
+                // resets by default when changing the clippingorithm (many points)
+            }
+        }
+        else if (number_of_rule == 32)
+        {
+            if (ct == 0)
+            {
+                // code for start point of square
+                X_left = LOWORD(lParam);
+                Y_top = HIWORD(lParam);
+                add_point(X_left, Y_top);
+                ct++;
+            }
+            else if (ct == 1)
+            {
+                // code for end point of square
+                X_right = LOWORD(lParam) + 100;
+                Y_bottom = HIWORD(lParam) + 100;
+                add_point(X_right, Y_bottom);
+                Square(hdc, X_left, Y_top, X_right, Y_bottom);
+                add_shape(clipping, color);
+                ct++;
+
+            }
+            else if (ct == 2)
+            {
+                // code for start point of lines
+                X_start = LOWORD(lParam);
+                Y_start = HIWORD(lParam);
+                add_point(X_start, Y_start);
+                ct++;
+
+            }
+            else if (ct == 3)
+            {
+                // code for end point of lines
+                X_end = LOWORD(lParam);
+                Y_end = HIWORD(lParam);
+                add_point(X_end, Y_end);
+                lineClippping(hdc, X_start, Y_start, X_end, Y_end, X_left, Y_top, X_right, Y_bottom, color);
+                // resets by default when changing the algorithm (many lines)
+                add_shape(drawCline, color);
+                ct = 0;
+
+            }
+        }
+        else if (number_of_rule == 33)
+        {
+            if (ct == 0)
+            {
+                // code for start point of rectangular
+                X_left = LOWORD(lParam);
+                Y_top = HIWORD(lParam);
+                add_point(X_left, Y_top);
+                ct++;
+            }
+            else if (ct == 1)
+            {
+                // code for end point of square
+                X_right = LOWORD(lParam) + 100;
+                Y_bottom = HIWORD(lParam) + 100;
+                add_point(X_right, Y_bottom);
+                Square(hdc, X_left, Y_top, X_right, Y_bottom);
+                add_shape(clipping, color);
+                ct++;
+            }
+            else if (ct == 2)
+            {
+                // code for points
+                x_1 = LOWORD(lParam);
+                y_1 = HIWORD(lParam);
+                add_point(x_1, y_1);
+                pointClippping(hdc, x_1, y_1, X_left, Y_top, X_right, Y_bottom, color);
+                add_shape(drawCPt, color);
+                ct = 0;
+                // resets by default when changing the clippingorithm (many points)
+            }
+        }
+        else if (number_of_rule == 34)
+        {
+            if (ct == 0)
+            {
+                x_c = LOWORD(lParam);
+                y_c = HIWORD(lParam);
+                add_point(x_c, y_c);
+                ct++;
+            }
+
+            else if (ct == 1)
+            {
+                x2 = LOWORD(lParam);
+                y2 = HIWORD(lParam);
+                add_point(x2, y2);
+                rad = sqrt(pow((x2 - x_c), 2) + pow((y2 - y_c), 2));
+                myCircle(hdc, x_c, y_c, rad);
+                add_shape(clipping, color);
+                ct++;
+            }
+            else if (ct == 2)
+            {
+                // code for start point of lines
+                X_start = LOWORD(lParam);
+                Y_start = HIWORD(lParam);
+                add_point(X_start, Y_start);
+                ct++;
+            }
+            else if (ct == 3)
+            {
+                // code for end point of lines
+                X_end = LOWORD(lParam);
+                Y_end = HIWORD(lParam);
+                add_point(X_end, Y_end);
+                DrawlineCircleClipping(hdc, X_start, Y_start, X_end, Y_end, color, x_c, y_c, rad);
+                // resets by default when changing the algorithm (many lines)
+                add_shape(drawCline, color);
+                ct = 0;
+            }
+        }
+        else if (number_of_rule == 35)
+        {
+            if (ct == 0)
+            {
+                x_c = LOWORD(lParam);
+                y_c = HIWORD(lParam);
+                add_point(x_c, y_c);
+                ct++;
+            }
+
+            else if (ct == 1)
+            {
+                x2 = LOWORD(lParam);
+                y2 = HIWORD(lParam);
+                add_point(x2, y2);
+                rad = sqrt(pow((x2 - x_c), 2) + pow((y2 - y_c), 2));
+                myCircle(hdc, x_c, y_c, rad);
+                add_shape(clipping, color);
+                ct++;
+            }
+            else if (ct == 2)
+            {
+                // code for points
+                x_1 = LOWORD(lParam);
+                y_1 = HIWORD(lParam);
+                add_point(x_1, y_1);
+                DrawPointCircleClipping(hdc, x_1, y_1, color, x_c, y_c, rad);
+                add_shape(drawCPt, color);
+                ct = 0;
+            }
+
+        }
+        else if (number_of_rule == 36)
+        {
+            Pt[index] = Vector8(LOWORD(lParam), HIWORD(lParam));
+            if (index == 3) {
+                hdc = GetDC(hwnd);
+                DrawCardinalSpline(hdc, Pt, 4, 0.5, RGB(255, 0, 0));
+                ReleaseDC(hwnd, hdc);
+                swap(Pt[3], Pt[0]);
+                index = 1;
+            }
+            else index++;
         }
         break;
 
