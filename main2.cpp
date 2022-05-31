@@ -1050,8 +1050,8 @@ void AddMenus(HWND hwnd)
 
 
 COLORREF color = RGB(0, 0, 0);
-int case_number;
-int A, B, x, x2, x3, y, y2, y3, counter = 0;
+int case_number;int A, B, x, x2, x3, y, y2, y3, counter = 0;
+
 LRESULT CALLBACK WindowProcedure(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
     HDC hdc = GetDC(hwnd);
@@ -1248,6 +1248,11 @@ LRESULT CALLBACK WindowProcedure(HWND hwnd, UINT message, WPARAM wParam, LPARAM 
             break;
         }
     case WM_LBUTTONDOWN:
+    if (case_number >= 1 && case_number <= 3) //  (Direct, Polar, iterative Polar, midpoint and modified Midpoint)
+        {
+            x = LOWORD(lParam);
+            y = HIWORD(lParam);
+        }
         if (case_number >= 6 && case_number <= 16 || (case_number >= 21 && case_number <= 26)) //  (Direct, Polar, iterative Polar, midpoint and modified Midpoint)
         {
             x = LOWORD(lParam);
@@ -1276,6 +1281,24 @@ LRESULT CALLBACK WindowProcedure(HWND hwnd, UINT message, WPARAM wParam, LPARAM 
                     //TODO: midpoint 
                 counter = 0;
             }
+        }
+        if (case_number == 1)
+        {
+            x2 = LOWORD(lParam);
+            y2 = HIWORD(lParam);
+            DrawLineParametric(hdc, x, y, x2, y2, color);
+        }
+        if (case_number == 2)
+        {
+            x2 = LOWORD(lParam);
+            y2 = HIWORD(lParam);
+            SimpleDDA(hdc, x, y, x2, y2, color);
+        }
+        if (case_number == 3)
+        {
+            x2 = LOWORD(lParam);
+            y2 = HIWORD(lParam);
+            MidpointLine(hdc, x, y, x2, y2, color);
         }
         break;
 
