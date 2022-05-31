@@ -65,7 +65,7 @@ int WINAPI WinMain(HINSTANCE hThisInstance,
         NULL,                /* No menu */
         hThisInstance,       /* Program Instance handler */
         NULL                 /* No Window Creation data */
-    );
+        );
 
     /* Make the window visible on the screen */
     ShowWindow(hwnd, nCmdShow);
@@ -717,30 +717,7 @@ struct Vector
         return v[i];
     }
 };
-void drawBezierCurve(HDC hdc, int x1, int y1, int x2, int y2, int u1, int u2, int u3, int u4, COLORREF c, int cx, int cy, int RR2)
-{
-    int a, b;
-    // int u1=50;int u2=60;int u3=30;int u4=60;
-    double a0 = x1, a1 = u1,
-        a2 = -3 * x1 - 2 * u1 + 3 * x2 - u2,
-        a3 = 2 * x1 + u1 - 2 * x2 + u2;
-    double b0 = y1, b1 = u3,
-        b2 = -3 * y1 - 2 * u3 + 3 * y2 - u4,
-        b3 = 2 * y1 + u3 - 2 * y2 + u4;
-    for (double t = 0; t <= 1; t += 0.001)
-    {
-        double t2 = t * t, t3 = t2 * t;
-        double x = a0 + a1 * t + a2 * t2 + a3 * t3;
-        double y = b0 + b1 * t + b2 * t2 + b3 * t3;
-        a = cx - x;
-        b = cy - y;
-        if (x >= cx && x <= (cx + RR2) && y >= cy && y <= (cy + RR2)) {
-            SetPixel(hdc, Round(x), Round(y), c);
-        }
 
-
-    }
-}
 //floodfill recursive//
 void RecursiveFloodFill(HDC hdc, int x, int y, COLORREF borderColor, COLORREF newColor)
 {
@@ -850,66 +827,68 @@ void DrawSquare(HDC hdc, int xc, int yc, int dist, COLORREF c)
 }
 //ConvixFilling//
 typedef struct
-{int xLeft, xRight;}edgeTable[800];
+{
+    int xLeft, xRight;
+}edgeTable[800];
 void Initialize(edgeTable table)
 {
-	for (int i = 0; i < 800; i++)
-	{
-		table[i].xLeft = INT_MAX;
-		table[i].xRight = - INT_MAX;
-	}
+    for (int i = 0; i < 800; i++)
+    {
+        table[i].xLeft = INT_MAX;
+        table[i].xRight = -INT_MAX;
+    }
 }
 
 void UpdateEdgeToTable(Point p1, Point p2, edgeTable table)
 {
 
-	if (p1.y == p2.y)
-		return;
-	if(p1.y>p2.y)
-		swap(p1.x, p1.y, p2.x, p2.y);
-	int slopeInverse =   (p2.x - p1.x) / (double)(p2.y - p1.y);
-	double x = p1.x;
-	int y = p1.y;
-	while(y<p2.y)
-		{
-		if (x < table[y].xLeft)
-			table[y].xLeft = (int) ceil(x);
-		if (x > table[y].xRight)
-			table[y].xRight = (int) floor(x);
-		y++;
-		x += slopeInverse;
-	}
+    if (p1.y == p2.y)
+        return;
+    if (p1.y > p2.y)
+        swap(p1.x, p1.y, p2.x, p2.y);
+    int slopeInverse = (p2.x - p1.x) / (double)(p2.y - p1.y);
+    double x = p1.x;
+    int y = p1.y;
+    while (y < p2.y)
+    {
+        if (x < table[y].xLeft)
+            table[y].xLeft = (int)ceil(x);
+        if (x > table[y].xRight)
+            table[y].xRight = (int)floor(x);
+        y++;
+        x += slopeInverse;
+    }
 }
 
-void PolygonToTable( Point PolygonPoints [] , int n , edgeTable table)
+void PolygonToTable(Point PolygonPoints[], int n, edgeTable table)
 {
-	Point p1 = PolygonPoints[n - 1];
-	for(int i = 0; i < n; i++)
-	{
-		Point p2 = PolygonPoints[i];
-		UpdateEdgeToTable(p1, p2, table);
-		p1 = p2;
-	}
+    Point p1 = PolygonPoints[n - 1];
+    for (int i = 0; i < n; i++)
+    {
+        Point p2 = PolygonPoints[i];
+        UpdateEdgeToTable(p1, p2, table);
+        p1 = p2;
+    }
 }
 
-void TableToScreen( HDC hdc, edgeTable table, COLORREF color)
+void TableToScreen(HDC hdc, edgeTable table, COLORREF color)
 {
-	
-	for (int i = 0; i < 800; i++)
-	{
-		if (table[i].xLeft < table[i].xRight)
-		{
+
+    for (int i = 0; i < 800; i++)
+    {
+        if (table[i].xLeft < table[i].xRight)
+        {
             SimpleDDA(hdc, table[i].xLeft, i, table[i].xRight, i, color);
-		}
-	}
+        }
+    }
 }
 
-void FillConvexPolygon( HDC hdc, Point PolygonPoints[] , int n , COLORREF color)
+void FillConvexPolygon(HDC hdc, Point PolygonPoints[], int n, COLORREF color)
 {
-	edgeTable table;
-	Initialize(table);
-	PolygonToTable(PolygonPoints, n, table);
-	TableToScreen(hdc, table, color);
+    edgeTable table;
+    Initialize(table);
+    PolygonToTable(PolygonPoints, n, table);
+    TableToScreen(hdc, table, color);
 }
 //nonConvix//
 struct Edgerec {
@@ -919,7 +898,7 @@ struct Edgerec {
 typedef list<Edgerec> EdgeTable[800];
 void scanEdge(POINT v1, POINT v2, EdgeTable tbl) {
     if (v1.y == v2.y) return;
-    if (v1.y > v2.y) SwapPoints(v1, v2);
+    if (v1.y > v2.y) swap(v1, v2);
     Edgerec rec(v1.x, v2.y, (double)(v2.x - v1.x) / (v2.y - v1.y));
     tbl[v1.y].push_back(rec);
 }
@@ -1069,13 +1048,10 @@ void AddMenus(HWND hwnd)
 
 
 
-int r2;
-int g, h;
-int cx, cy, a, b, RR, RR1, a1, b1;
-bool curve = false;
+
 COLORREF color = RGB(0, 0, 0);
 int case_number;
-int x, y;
+int x1, x2, x3, y1, y2, y3;
 LRESULT CALLBACK WindowProcedure(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
     HDC hdc = GetDC(hwnd);
@@ -1136,25 +1112,151 @@ LRESULT CALLBACK WindowProcedure(HWND hwnd, UINT message, WPARAM wParam, LPARAM 
             break;
         case  (10):
             case_number = 10;
+            cout << "You can Draw circle using MidPoint Algorithm....." << endl;
+
+            break;
+        case  (11):
+            case_number = 11;
+            cout << "You can Draw circle using MidPoint Algorithm....." << endl;
+
+            break;
+        case  (12):
+            case_number = 12;
+            cout << "You can Draw circle using MidPoint Algorithm....." << endl;
+
+            break;
+        case  (13):
+            case_number = 13;
+            cout << "You can Draw circle using MidPoint Algorithm....." << endl;
+
+            break;
+        case  (14):
+            case_number = 14;
+            cout << "You can Draw circle using MidPoint Algorithm....." << endl;
+
+            break;
+        case  (15):
+            case_number = 15;
             cout << "You can Draw circle using MidPoint Modification Algorithm....." << endl;
-        case WM_LBUTTONDOWN:
-            if (case_number >= 6 && case_number <= 16 || (case_number >= 21 && case_number <= 26)) //  (Direct, Polar, iterative Polar, midpoint and modified Midpoint)
-            {
-                x = LOWORD(lParam);
-                y = HIWORD(lParam);
-            }
+
+            break;
+        case  (16):
+            case_number = 16;
+            cout << "You can Draw circle using MidPoint Modification Algorithm....." << endl;
+
+            break;
+        case  (17):
+            case_number = 17;
+            cout << "You can Draw circle using MidPoint Modification Algorithm....." << endl;
+
+            break;
+
+        case  (18):
+            case_number = 18;
+            cout << "You can Draw circle using MidPoint Modification Algorithm....." << endl;
+
+            break;
+        case  (19):
+            case_number = 19;
+            cout << "You can Draw circle using MidPoint Modification Algorithm....." << endl;
+
+            break;
+        case  (20):
+            case_number = 20;
+            cout << "You can Draw circle using MidPoint Modification Algorithm....." << endl;
+
+            break;
+        case  (21):
+            case_number = 21;
+            cout << "You can Draw circle using MidPoint Modification Algorithm....." << endl;
+
+            break;
+        case  (22):
+            case_number = 22;
+            cout << "You can Draw circle using MidPoint Modification Algorithm....." << endl;
+
+            break;
+        case  (23):
+            case_number = 23;
+            cout << "You can Draw circle using MidPoint Modification Algorithm....." << endl;
+
+            break;
+        case  (24):
+            case_number = 24;
+            cout << "You can Draw circle using MidPoint Modification Algorithm....." << endl;
+
+            break;
+        case  (25):
+            case_number = 25;
+            cout << "You can Draw circle using MidPoint Modification Algorithm....." << endl;
+
+            break;
+        case  (26):
+            case_number = 26;
+            cout << "You can Draw circle using MidPoint Modification Algorithm....." << endl;
+
+            break;
+        case  (27):
+            case_number = 27;
+            cout << "You can Draw circle using MidPoint Modification Algorithm....." << endl;
+
+            break;
+        case  (28):
+            case_number = 28;
+            cout << "You can Draw circle using MidPoint Modification Algorithm....." << endl;
+
+            break;
+        case  (29):
+            case_number = 29;
+            cout << "You can Draw circle using MidPoint Modification Algorithm....." << endl;
+
+            break;
+        case  (30):
+            case_number = 30;
+            cout << "You can Draw circle using MidPoint Modification Algorithm....." << endl;
+
+            break;
+        case  (31):
+            case_number = 31;
+            cout << "You can Draw circle using MidPoint Modification Algorithm....." << endl;
+
+            break;
+        case  (32):
+            case_number = 32;
+            cout << "You can Draw circle using MidPoint Modification Algorithm....." << endl;
+
+            break;
+        case  (33):
+            case_number = 33;
+            cout << "You can Draw circle using MidPoint Modification Algorithm....." << endl;
+
+            break;
+        case  (34):
+            case_number = 34;
+            cout << "You can Draw circle using MidPoint Modification Algorithm....." << endl;
+
+            break;
+        case  (35):
+            case_number = 35;
+            cout << "You can Draw circle using MidPoint Modification Algorithm....." << endl;
+
+            break;
+        case  (36):
+            case_number = 36;
+            cout << "You can Draw circle using MidPoint Modification Algorithm....." << endl;
+
+            break;
+        }
+    case WM_LBUTTONDOWN:
+        if (case_number >= 6 && case_number <= 16 || (case_number >= 21 && case_number <= 26)) //  (Direct, Polar, iterative Polar, midpoint and modified Midpoint)
+        {
+            x1 = LOWORD(lParam);
+            y1 = HIWORD(lParam);
         }
         break;
-    case WM_RBUTTONDOWN:
-        a = LOWORD(lParam) - cx;
-        b = HIWORD(lParam) - cy;
-        RR = sqrt(a * a + b * b);
-        a1 = LOWORD(lParam);
-        b1 = HIWORD(lParam);
-        hdc = GetDC(hwnd);
-        RR1 = 100;
 
-        curve = true;
+    case WM_RBUTTONDOWN:
+
         break;
 
     case WM_DESTROY:
