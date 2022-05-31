@@ -200,7 +200,7 @@ void MidpointLine(HDC hdc, int xs, int ys, int xe, int ye, COLORREF color)
                 x++;
                 d += d2;
             }
-            SetPixel(hdc, x, y, RGB(0, 100, 255));
+            SetPixel(hdc, x, y, color);
         }
     }
     else
@@ -222,7 +222,7 @@ void MidpointLine(HDC hdc, int xs, int ys, int xe, int ye, COLORREF color)
                 y++;
                 d += d2;
             }
-            SetPixel(hdc, x, y, RGB(0, 100, 255));
+            SetPixel(hdc, x, y, color);
         }
     }
 }
@@ -293,6 +293,22 @@ void CirclePolar(HDC hdc, int xc, int yc, int R, COLORREF color)
         Draw8Points(hdc, xc, yc, x, y, color);
     }
 }
+
+void CircleIterativePolar(HDC hdc, int xc, int yc, int R, COLORREF color)
+{
+    double x = R, y = 0;
+    double dtheta = 1.0 / R;
+    double cdtheta = cos(dtheta), sdtheta = sin(dtheta);
+    Draw8Points(hdc, xc, yc, R, 0, color);
+    while (x > y)
+    {
+        double x1 = (x * cdtheta) - (y * sdtheta);
+        y = (x * sdtheta) + (y * cdtheta);
+        x = x1;
+        Draw8Points(hdc, xc, yc, round(x), round(y), color);
+    }
+}
+
 void Draw2Points(HDC hdc, int xc, int yc, int a, int b, COLORREF color, int quarter)
 {
     if (quarter == 4)
@@ -498,24 +514,56 @@ void DrawEllipseCartesian(HDC hdc, int xc, int yc, int A, int B, COLORREF color)
         Draw4Points(hdc, xc, yc, Round(x2), y2, color);
     }
 }
-void DrawEllipseIterativePolar(HDC hdc, int xc, int yc, int A, int B, COLORREF color)
+void DrawMidpointEllipse(HDC hdc, int xc, int yc, int A, int B, COLORREF color)
 {
-    double x = A, y = 0, dtheta = 1.0 / max(A, B), cos_dtheta = cos(dtheta), sin_dtheta = sin(dtheta);
-    Draw4Points(hdc, xc, yc, x, y, color);
-    while (x > y)
+
+
+    float dx, dy, d1, d2, x, y;
+    x = 0;
+    y = B;
+    d1 = (B * B) - (A * A * B) + (0.25 * A * A);
+    dx = 2 * B * B * x;
+    dy = 2 * A * A * y;
+    while (dx < dy)
     {
-        double x1 = x * cos_dtheta - ((double)A / B) * y * sin_dtheta;
-        y = y * cos_dtheta + ((double)B / A) * x * sin_dtheta;
-        x = x1;
-        Draw4Points(hdc, xc, yc, Round(x), Round(y), color);
+        Draw4Points(hdc, xc, yc, x, y, color);
+        if (d1 < 0)
+        {
+            x++;
+            dx = dx + (2 * B * B);
+            d1 = d1 + dx + (B * B);
+        }
+        else
+        {
+            x++;
+            y--;
+            dx = dx + (2 * B * B);
+            dy = dy - (2 * A * A);
+            d1 = d1 + dx - dy + (B * B);
+        }
     }
-    while (x < y)
+    d2 = ((B * B) * ((x + 0.5) * (x + 0.5))) +
+        ((A * A) * ((y - 1) * (y - 1))) -
+        (A * A * B * B);
+    while (y >= 0)
     {
-        double x1 = x * cos_dtheta - ((double)A / B) * y * sin_dtheta;
-        y = y * cos_dtheta + ((double)B / A) * x * sin_dtheta;
-        x = x1;
-        Draw4Points(hdc, xc, yc, Round(x), Round(y), color);
+        Draw4Points(hdc, xc, yc, x, y, color);
+        if (d2 > 0)
+        {
+            y--;
+            dy = dy - (2 * A * A);
+            d2 = d2 + (A * A) - dy;
+        }
+        else
+        {
+            y--;
+            x++;
+            dx = dx + (2 * B * B);
+            dy = dy - (2 * A * A);
+            d2 = d2 + dx - dy + (A * A);
+        }
     }
+
 }
 void DrawEllipsePolar(HDC hdc, int xc, int yc, int A, int B, COLORREF color)
 {
@@ -1050,7 +1098,8 @@ void AddMenus(HWND hwnd)
 
 
 COLORREF color = RGB(0, 0, 0);
-int case_number;int A, B, x, x2, x3, y, y2, y3, counter = 0;
+int case_number, quarter;
+int R, A, B, x, x2, x3, y, y2, y3, counter = 0;
 
 LRESULT CALLBACK WindowProcedure(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
@@ -1146,23 +1195,23 @@ LRESULT CALLBACK WindowProcedure(HWND hwnd, UINT message, WPARAM wParam, LPARAM 
 
             break;
         case  (17):
-            case_number = 17;
+            quarter = 1;
             cout << "You can Draw circle using MidPoint Modification Algorithm....." << endl;
 
             break;
 
         case  (18):
-            case_number = 18;
+            quarter = 2;
             cout << "You can Draw circle using MidPoint Modification Algorithm....." << endl;
 
             break;
         case  (19):
-            case_number = 19;
+            quarter = 3;
             cout << "You can Draw circle using MidPoint Modification Algorithm....." << endl;
 
             break;
         case  (20):
-            case_number = 20;
+            quarter = 4;
             cout << "You can Draw circle using MidPoint Modification Algorithm....." << endl;
 
             break;
@@ -1248,11 +1297,6 @@ LRESULT CALLBACK WindowProcedure(HWND hwnd, UINT message, WPARAM wParam, LPARAM 
             break;
         }
     case WM_LBUTTONDOWN:
-    if (case_number >= 1 && case_number <= 3) //  (Direct, Polar, iterative Polar, midpoint and modified Midpoint)
-        {
-            x = LOWORD(lParam);
-            y = HIWORD(lParam);
-        }
         if (case_number >= 6 && case_number <= 16 || (case_number >= 21 && case_number <= 26)) //  (Direct, Polar, iterative Polar, midpoint and modified Midpoint)
         {
             x = LOWORD(lParam);
@@ -1277,28 +1321,75 @@ LRESULT CALLBACK WindowProcedure(HWND hwnd, UINT message, WPARAM wParam, LPARAM 
                     DrawEllipseCartesian(hdc, x, y, A, B, color);
                 else if (case_number == 15)
                     DrawEllipsePolar(hdc, x, y, A, B, color);
-                //else
-                    //TODO: midpoint 
+                else
+                    DrawMidpointEllipse(hdc, x, y, A, B, color);
                 counter = 0;
             }
         }
-        if (case_number == 1)
-        {
-            x2 = LOWORD(lParam);
-            y2 = HIWORD(lParam);
-            DrawLineParametric(hdc, x, y, x2, y2, color);
-        }
-        if (case_number == 2)
+        if (case_number == 11)
         {
             x2 = LOWORD(lParam);
             y2 = HIWORD(lParam);
             SimpleDDA(hdc, x, y, x2, y2, color);
         }
-        if (case_number == 3)
+        if (case_number == 12)
         {
             x2 = LOWORD(lParam);
             y2 = HIWORD(lParam);
             MidpointLine(hdc, x, y, x2, y2, color);
+        }
+        if (case_number == 13)
+        {
+            x2 = LOWORD(lParam);
+            y2 = HIWORD(lParam);
+            DrawLineParametric(hdc, x, y, x2, y2, color);
+        }
+        if (case_number == 6) {
+            x2 = LOWORD(lParam);
+            y2 = HIWORD(lParam);
+            x2 = (x2 - x) * (x2 - x);
+            y2 = (y2 - y) * (y2 - y);
+            R = sqrt(x2 + y2);
+
+            CircleDirect(hdc, x, y, R, color);
+        }
+        if (case_number == 7)//circleiter
+        {
+            x2 = LOWORD(lParam);
+            y2 = HIWORD(lParam);
+            x2 = (x2 - x) * (x2 - x);
+            y2 = (y2 - y) * (y2 - y);
+            R = sqrt(x2 + y2);
+            CirclePolar(hdc, x, y, R, color);
+
+        }
+        if (case_number == 8)//circleitrativepolar
+        {
+            x2 = LOWORD(lParam);
+            y2 = HIWORD(lParam);
+            x2 = (x2 - x) * (x2 - x);
+            y2 = (y2 - y) * (y2 - y);
+            R = sqrt(x2 + y2);
+            CircleIterativePolar(hdc, x, y, R, color);
+
+        }
+        if (case_number == 9)//circleBresenham
+        {
+            x2 = LOWORD(lParam);
+            y2 = HIWORD(lParam);
+            x2 = (x2 - x) * (x2 - x);
+            y2 = (y2 - y) * (y2 - y);
+            R = sqrt(x2 + y2);
+            CircleBresenham(hdc, x, y, R, color);
+        }
+        if (case_number == 10)// circleFasterVresenhamfaster
+        {
+            x2 = LOWORD(lParam);
+            y2 = HIWORD(lParam);
+            x2 = (x2 - x) * (x2 - x);
+            y2 = (y2 - y) * (y2 - y);
+            R = sqrt(x2 + y2);
+            CircleFasterBresenham(hdc, x, y, R, color);
         }
         break;
 
